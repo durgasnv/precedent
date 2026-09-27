@@ -20,7 +20,7 @@ Requires Node.js 20 or later. Run `npm ci` and `npm test` for the module tests. 
 
 For Cloud, register at [Hindsight Cloud](https://ui.hindsight.vectorize.io/), create an API key, and use `https://api.hindsight.vectorize.io` as the base URL. For a self hosted instance, use its API URL (commonly `http://localhost:8888`); an API key is only needed if that server requires one. The hackathon information supplied to the team says promo code `MEMHACK99` provides $50 in Cloud credits and is entered in Billing **after registration**. Billing and promo redemption are optional account steps, outside the code setup.
 
-With a configured, reachable Hindsight instance, run `npm run memory:smoke`. It creates or updates the bank, retains a stable demo decision, checks that recall finds it, then runs proposal analysis and reassessment. It will write the demo decision to the configured bank. A Cloud account, API key, and live instance are needed to verify this integration end to end; the automated tests use a mock client and do not contact Hindsight.
+With a configured, reachable Hindsight instance, run `npm run memory:seed` to retain three stable demo decisions: WebSocket notifications, a successful PostgreSQL partial index, and a Redis permissions cache with a safety blocker. Re-running the command replaces each document with the same ID. Run `npm run memory:smoke` to seed those decisions, check all three recall queries, analyze the WebSocket proposal, and reassess its changed proxy assumption. These commands write the fixtures to the configured bank. A Cloud account, API key, and live instance are needed to verify this integration end to end; the automated tests use a mock client and do not contact Hindsight.
 
 ## Sources
 

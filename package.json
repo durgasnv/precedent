@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
+    "memory:seed": "node --env-file=.env scripts/seed-decisions.js",
     "memory:smoke": "node --env-file=.env scripts/memory-smoke.js"
   },
   "dependencies": {

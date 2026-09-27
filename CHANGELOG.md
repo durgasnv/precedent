@@ -49,3 +49,18 @@ Hindsight Recall still supplies ranked candidate facts. Reflect judges whether t
 ### Process
 
 Used Hindsight's documented relative recall ranking and structured Reflect response. Added tests for an unrelated recall result, grouped facts from one decision, and invalid fact references.
+
+## 2026-09-27 — Add repeatable decision memory fixtures
+
+### Change
+
+- Added three engineering decision fixtures covering a failed notification migration, a successful database index, and a blocked permissions cache.
+- Added a seed command and expanded the live smoke command to exercise recall for all three decisions, proposal analysis, and changed-assumption reassessment.
+
+### How the feature works
+
+Each fixture uses a stable decision ID, which becomes a stable Hindsight document ID. Repeated seeding replaces that document's memory rather than accumulating duplicates. The smoke command checks that each fixture can be recalled by a related proposal.
+
+### Process
+
+Prepared distinct scenarios from the project's planned demo needs, then wired the existing retain, recall, analyze, and reassess methods into repeatable scripts.
