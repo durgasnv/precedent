@@ -17,3 +17,20 @@ The documented MVP lets a team record a technical decision with its goal, attemp
 ### Process
 
 Read all project documents, searched for application-name references, updated the inconsistent names, and checked the documents again for the former names. This entry describes a documentation change; it does not claim that the planned workflow is implemented.
+
+## 2026-09-27 — Implement the Person 1 memory and AI module
+
+### Change
+
+- Added the official Hindsight JavaScript client dependency, environment example, and server-side memory module.
+- Added bank setup, synchronous decision retention with stable document IDs, related-memory recall, structured proposal analysis, and structured assumption reassessment.
+- Added automated tests and an optional live smoke script.
+- Documented configuration, module contracts, the planned backend integration, and current verification limits in [Memory and AI module](docs/memory-ai.md).
+
+### How the feature works
+
+A backend caller passes a decision record to `retainDecision`. Hindsight extracts searchable facts while the decision ID stays attached as metadata. A later proposal calls `recallRelated`, which returns source facts. `analyzeProposal` uses those facts and Hindsight Reflect to produce a structured explanation with checked memory references. `reassessDecision` compares new circumstances against the original record and reports a status without changing history.
+
+### Process
+
+Checked the current official Hindsight client and retain, recall, and reflect documentation. Implemented a standalone module so the backend team can call it from future routes. Verified behavior with mocked client tests; the live smoke path requires a configured Hindsight service and credentials.
