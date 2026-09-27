@@ -34,3 +34,18 @@ A backend caller passes a decision record to `retainDecision`. Hindsight extract
 ### Process
 
 Checked the current official Hindsight client and retain, recall, and reflect documentation. Implemented a standalone module so the backend team can call it from future routes. Verified behavior with mocked client tests; the live smoke path requires a configured Hindsight service and credentials.
+
+## 2026-09-27 — Identify relevant precedents and group their evidence
+
+### Change
+
+- Added an explicit relevance result to proposal analysis, so unrelated recalled facts produce a no-match response.
+- Grouped supported fact matches by `decision_id` for backend and UI display while keeping each source fact visible.
+
+### How the feature works
+
+Hindsight Recall still supplies ranked candidate facts. Reflect judges whether those facts actually address the proposal. PRECEDENT accepts match references only when they name a recalled fact, groups accepted facts from the same decision, and returns `analysis: null` with a reason when no relevant precedent is supported.
+
+### Process
+
+Used Hindsight's documented relative recall ranking and structured Reflect response. Added tests for an unrelated recall result, grouped facts from one decision, and invalid fact references.

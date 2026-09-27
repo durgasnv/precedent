@@ -50,6 +50,7 @@ test('recalls source identifiers and keeps an empty history distinct from an AI 
   });
   const result = await memory.analyzeProposal('Use WebSockets for notifications');
   assert.deepEqual(result.memories, []);
+  assert.deepEqual(result.decision_matches, []);
   assert.equal(result.analysis, null);
   assert.equal(reflected, false);
 });
@@ -60,7 +61,11 @@ test('analyzes recalled history and discards citations outside the recalled evid
       recall: async () => ({ results: [{
         id: 'fact-1', text: 'Proxies blocked WebSockets', type: 'world',
         document_id: 'decision:websocket-notifications',
-        metadata: { decision_id: decision.id },
+        metadata: { decision_id: decision.id, title: decision.title },
+      }, {
+        id: 'fact-2', text: 'The team chose SSE', type: 'world',
+        document_id: 'decision:websocket-notifications',
+        metadata: { decision_id: decision.id, title: decision.title },
       }] }),
       reflect: async (_bank, prompt, options) => {
         assert.match(prompt, /fact-1/);
@@ -68,9 +73,12 @@ test('analyzes recalled history and discards citations outside the recalled evid
         return {
           text: 'The prior proxy issue is relevant.',
           structured_output: {
+            has_relevant_precedent: true,
+            no_match_reason: '',
             summary: 'A previous migration hit proxy restrictions.',
             matches: [
               { memory_id: 'fact-1', why_relevant: 'Same approach', historical_outcome: 'Failed', original_assumption: 'Proxies persist' },
+              { memory_id: 'fact-2', why_relevant: 'Same decision', historical_outcome: 'Used SSE', original_assumption: 'Proxies persist' },
               { memory_id: 'made-up', why_relevant: 'Unknown', historical_outcome: 'Unknown', original_assumption: 'Unknown' },
             ],
           },
@@ -81,8 +89,31 @@ test('analyzes recalled history and discards citations outside the recalled evid
   });
   const result = await memory.analyzeProposal('Use WebSockets for notifications');
   assert.equal(result.memories[0].decision_id, decision.id);
-  assert.equal(result.analysis.matches.length, 1);
+  assert.equal(result.analysis.matches.length, 2);
   assert.equal(result.analysis.matches[0].memory_id, 'fact-1');
+  assert.equal(result.decision_matches.length, 1);
+  assert.equal(result.decision_matches[0].title, decision.title);
+  assert.deepEqual(result.decision_matches[0].facts.map((fact) => fact.id), ['fact-1', 'fact-2']);
+});
+
+test('returns no relevant precedent when recall finds unrelated facts', async () => {
+  const memory = createMemoryAi({
+    client: fakeClient({
+      recall: async () => ({ results: [{ id: 'other', text: 'Database index changed', metadata: { decision_id: 'db-index' } }] }),
+      reflect: async () => ({ text: 'No relevant decision.', structured_output: {
+        has_relevant_precedent: false,
+        no_match_reason: 'The recalled index decision is unrelated to notifications.',
+        summary: 'No relevant history.',
+        matches: [],
+      } }),
+    }),
+    bankId: 'test-bank',
+  });
+  const result = await memory.analyzeProposal('Replace notifications with WebSockets');
+  assert.equal(result.memories.length, 1);
+  assert.equal(result.analysis, null);
+  assert.deepEqual(result.decision_matches, []);
+  assert.match(result.no_match_reason, /unrelated/);
 });
 
 test('reassessment uses the supplied historical decision without changing it', async () => {

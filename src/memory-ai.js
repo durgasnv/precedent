@@ -3,6 +3,8 @@ import { HindsightClient } from '@vectorize-io/hindsight-client';
 const ANALYSIS_SCHEMA = {
   type: 'object',
   properties: {
+    has_relevant_precedent: { type: 'boolean' },
+    no_match_reason: { type: 'string' },
     summary: { type: 'string' },
     matches: {
       type: 'array',
@@ -18,7 +20,7 @@ const ANALYSIS_SCHEMA = {
       },
     },
   },
-  required: ['summary', 'matches'],
+  required: ['has_relevant_precedent', 'no_match_reason', 'summary', 'matches'],
 };
 
 const REASSESSMENT_SCHEMA = {
@@ -89,7 +91,8 @@ function recalledMemories(response) {
     text: item.text,
     type: item.type,
     document_id: item.document_id ?? null,
-    decision_id: item.metadata?.decision_id ?? null,
+    decision_id: item.metadata?.decision_id ?? (item.document_id?.startsWith('decision:') ? item.document_id.slice('decision:'.length) : null),
+    title: item.metadata?.title ?? null,
     source_fact_ids: item.source_fact_ids ?? [],
     source_facts: (item.source_fact_ids ?? []).map((id) => response.source_facts?.[id]).filter(Boolean).map((source) => ({
       id: source.id,
@@ -99,6 +102,23 @@ function recalledMemories(response) {
     })),
     scores: item.scores ?? null,
   }));
+}
+
+export function groupDecisionMatches(memories, matches) {
+  const byId = new Map();
+  const memoryById = new Map(memories.map((memory) => [memory.id, memory]));
+  for (const match of matches) {
+    const memory = memoryById.get(match.memory_id);
+    if (!memory?.decision_id) continue;
+    let group = byId.get(memory.decision_id);
+    if (!group) {
+      group = { decision_id: memory.decision_id, title: memory.title, facts: [], matches: [] };
+      byId.set(memory.decision_id, group);
+    }
+    if (!group.facts.some((fact) => fact.id === memory.id)) group.facts.push(memory);
+    group.matches.push(match);
+  }
+  return [...byId.values()];
 }
 
 function structuredResponse(response, requiredFields) {
@@ -152,14 +172,16 @@ export function createMemoryAi({ client, bankId }) {
       const query = nonEmptyString(proposal, 'proposal');
       const memories = await recallRelated(query);
       if (memories.length === 0) {
-        return { proposal: query, memories, analysis: null };
+        return { proposal: query, memories, decision_matches: [], analysis: null, no_match_reason: 'No decision memories were recalled.' };
       }
       const evidence = memories.map(({ id, text, decision_id }) => ({ id, text, decision_id }));
       const prompt = [
         'Analyze this new technical proposal against the recorded technical decisions.',
         `Proposal: ${query}`,
         `Recalled evidence: ${JSON.stringify(evidence)}`,
-        'Explain why each useful memory relates to the proposal. Use only memory_id values from the recalled evidence.',
+        'Decide whether any recalled evidence is genuinely relevant to the proposed approach. Retrieval rank alone is not proof of relevance.',
+        'If no evidence is relevant, set has_relevant_precedent to false, give a short no_match_reason, and return no matches.',
+        'If there is a relevant precedent, set has_relevant_precedent to true and explain why each useful memory relates to the proposal. Use only memory_id values from the recalled evidence.',
         'Separate historical facts from your current interpretation. Do not invent outcomes or assumptions. If unknown, say so.',
         'An old failure is not a permanent prohibition. The engineer makes the final decision.',
       ].join('\n');
@@ -168,15 +190,28 @@ export function createMemoryAi({ client, bankId }) {
         responseSchema: ANALYSIS_SCHEMA,
         includeFacts: true,
       });
-      const output = structuredResponse(response, ['summary', 'matches']);
-      if (typeof output.summary !== 'string' || !Array.isArray(output.matches)) {
+      const output = structuredResponse(response, ['has_relevant_precedent', 'no_match_reason', 'summary', 'matches']);
+      if (typeof output.has_relevant_precedent !== 'boolean' || typeof output.no_match_reason !== 'string' ||
+          typeof output.summary !== 'string' || !Array.isArray(output.matches)) {
         throw new Error('Hindsight analysis has an invalid structure');
       }
       const allowedIds = new Set(memories.map(({ id }) => id));
       const matches = output.matches.filter((match) =>
         match && allowedIds.has(match.memory_id) &&
         ['why_relevant', 'historical_outcome', 'original_assumption'].every((field) => typeof match[field] === 'string'));
-      return { proposal: query, memories, analysis: { summary: output.summary, matches, text: response.text } };
+      if (!output.has_relevant_precedent || matches.length === 0) {
+        return {
+          proposal: query, memories, decision_matches: [], analysis: null,
+          no_match_reason: output.no_match_reason || 'No recalled memory was confirmed as relevant.',
+        };
+      }
+      return {
+        proposal: query,
+        memories,
+        decision_matches: groupDecisionMatches(memories, matches),
+        analysis: { summary: output.summary, matches, text: response.text },
+        no_match_reason: null,
+      };
     },
 
     async reassessDecision(input, changedCircumstances) {
