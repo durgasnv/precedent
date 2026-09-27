@@ -14,6 +14,8 @@ The record shape uses `id`, `title`, `problem`, `approach`, `outcome`, `failure_
 
 The backend should store the authoritative decision record separately. Hindsight extracts facts from retained content, so recall can return several facts from one decision and does not guarantee a complete copy of the original record. Use `decision_id` to link a recalled fact to the stored record.
 
+Provider failures throw `MemoryAiError` with a `code`, `stage`, and `retryable` flag. Codes are `HINDSIGHT_AUTH`, `HINDSIGHT_CREDITS`, `HINDSIGHT_UNAVAILABLE`, `HINDSIGHT_REQUEST_FAILED`, and `HINDSIGHT_INVALID_RESPONSE`. Input validation still throws `TypeError`. The public error message omits provider details; backend logs can inspect `cause` without exposing credentials or provider responses to clients. Retain writes are not automatically retried by this module.
+
 ## Setup and verification
 
 Requires Node.js 20 or later. Run `npm ci` and `npm test` for the module tests. Copy `.env.example` to `.env` and set `HINDSIGHT_BASE_URL`, `HINDSIGHT_BANK_ID`, and, for Hindsight Cloud, `HINDSIGHT_API_KEY`. Keep `.env` out of version control.

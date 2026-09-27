@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMemoryAi, formatDecision, validateDecision } from '../src/memory-ai.js';
+import { HindsightError } from '@vectorize-io/hindsight-client';
+import { createMemoryAi, formatDecision, MemoryAiError, validateDecision } from '../src/memory-ai.js';
 
 const decision = {
   id: 'websocket-notifications',
@@ -142,5 +143,42 @@ test('rejects incomplete decisions and missing structured output', async () => {
     client: fakeClient({ reflect: async () => ({ text: 'unstructured' }) }),
     bankId: 'test-bank',
   });
-  await assert.rejects(memory.reassessDecision(decision, 'Proxy changed'), /structured output/);
+  await assert.rejects(memory.reassessDecision(decision, 'Proxy changed'), (error) => {
+    assert.equal(error.code, 'HINDSIGHT_INVALID_RESPONSE');
+    assert.equal(error.stage, 'reassess');
+    return true;
+  });
+});
+
+test('classifies Hindsight authentication, credit, and availability failures', async () => {
+  for (const [status, code, retryable] of [
+    [401, 'HINDSIGHT_AUTH', false],
+    [402, 'HINDSIGHT_CREDITS', false],
+    [503, 'HINDSIGHT_UNAVAILABLE', true],
+  ]) {
+    const memory = createMemoryAi({
+      client: fakeClient({ recall: async () => { throw new HindsightError('provider detail', status); } }),
+      bankId: 'test-bank',
+    });
+    await assert.rejects(memory.recallRelated('WebSockets'), (error) => {
+      assert.ok(error instanceof MemoryAiError);
+      assert.equal(error.code, code);
+      assert.equal(error.stage, 'recall');
+      assert.equal(error.retryable, retryable);
+      assert.doesNotMatch(error.message, /provider detail/);
+      return true;
+    });
+  }
+});
+
+test('identifies an invalid recall response independently of provider failures', async () => {
+  const memory = createMemoryAi({
+    client: fakeClient({ recall: async () => ({ unexpected: true }) }),
+    bankId: 'test-bank',
+  });
+  await assert.rejects(memory.recallRelated('WebSockets'), (error) => {
+    assert.equal(error.code, 'HINDSIGHT_INVALID_RESPONSE');
+    assert.equal(error.stage, 'recall');
+    return true;
+  });
 });

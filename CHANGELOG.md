@@ -64,3 +64,18 @@ Each fixture uses a stable decision ID, which becomes a stable Hindsight documen
 ### Process
 
 Prepared distinct scenarios from the project's planned demo needs, then wired the existing retain, recall, analyze, and reassess methods into repeatable scripts.
+
+## 2026-09-27 — Classify Hindsight integration failures
+
+### Change
+
+- Added stable `MemoryAiError` codes and stages for authorization, credits, service availability, rejected requests, and invalid responses.
+- Added a retryability flag and tests for the main provider failure cases.
+
+### How the feature works
+
+The backend can map each code to an appropriate API response or user message while keeping provider details in the server-side error cause. Invalid structured output is reported distinctly from an unavailable Hindsight service.
+
+### Process
+
+Mapped the Hindsight client's HTTP status errors at the service boundary and checked the error contract with a mocked client. Left input validation separate from provider failures.

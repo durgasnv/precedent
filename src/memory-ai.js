@@ -1,4 +1,33 @@
-import { HindsightClient } from '@vectorize-io/hindsight-client';
+import { HindsightClient, HindsightError } from '@vectorize-io/hindsight-client';
+
+export class MemoryAiError extends Error {
+  constructor(code, stage, message, options = {}) {
+    super(message, { cause: options.cause });
+    this.name = 'MemoryAiError';
+    this.code = code;
+    this.stage = stage;
+    this.retryable = options.retryable ?? false;
+  }
+}
+
+async function callHindsight(stage, operation) {
+  try {
+    return await operation();
+  } catch (cause) {
+    if (cause instanceof MemoryAiError) throw cause;
+    const status = cause instanceof HindsightError ? cause.statusCode : undefined;
+    if (status === 401 || status === 403) {
+      throw new MemoryAiError('HINDSIGHT_AUTH', stage, 'Hindsight authentication or permission failed.', { cause });
+    }
+    if (status === 402) {
+      throw new MemoryAiError('HINDSIGHT_CREDITS', stage, 'Hindsight credits are unavailable.', { cause });
+    }
+    if (status === 429 || status >= 500 || cause?.name === 'AbortError' || cause instanceof TypeError) {
+      throw new MemoryAiError('HINDSIGHT_UNAVAILABLE', stage, 'Hindsight is temporarily unavailable.', { cause, retryable: true });
+    }
+    throw new MemoryAiError('HINDSIGHT_REQUEST_FAILED', stage, 'Hindsight rejected the request.', { cause });
+  }
+}
 
 const ANALYSIS_SCHEMA = {
   type: 'object',
@@ -85,23 +114,30 @@ export function formatDecision(decision) {
 }
 
 function recalledMemories(response) {
-  if (!Array.isArray(response?.results)) throw new Error('Hindsight recall returned no results array');
-  return response.results.map((item) => ({
-    id: nonEmptyString(item.id, 'Hindsight result id'),
-    text: item.text,
-    type: item.type,
-    document_id: item.document_id ?? null,
-    decision_id: item.metadata?.decision_id ?? (item.document_id?.startsWith('decision:') ? item.document_id.slice('decision:'.length) : null),
-    title: item.metadata?.title ?? null,
-    source_fact_ids: item.source_fact_ids ?? [],
-    source_facts: (item.source_fact_ids ?? []).map((id) => response.source_facts?.[id]).filter(Boolean).map((source) => ({
-      id: source.id,
-      text: source.text,
-      document_id: source.document_id ?? null,
-      decision_id: source.metadata?.decision_id ?? null,
-    })),
-    scores: item.scores ?? null,
-  }));
+  if (!Array.isArray(response?.results)) {
+    throw new MemoryAiError('HINDSIGHT_INVALID_RESPONSE', 'recall', 'Hindsight recall returned an invalid response.');
+  }
+  return response.results.map((item) => {
+    if (typeof item?.id !== 'string' || !item.id || typeof item.text !== 'string') {
+      throw new MemoryAiError('HINDSIGHT_INVALID_RESPONSE', 'recall', 'Hindsight recall returned an invalid fact.');
+    }
+    return {
+      id: item.id,
+      text: item.text,
+      type: item.type,
+      document_id: item.document_id ?? null,
+      decision_id: item.metadata?.decision_id ?? (item.document_id?.startsWith('decision:') ? item.document_id.slice('decision:'.length) : null),
+      title: item.metadata?.title ?? null,
+      source_fact_ids: item.source_fact_ids ?? [],
+      source_facts: (item.source_fact_ids ?? []).map((id) => response.source_facts?.[id]).filter(Boolean).map((source) => ({
+        id: source.id,
+        text: source.text,
+        document_id: source.document_id ?? null,
+        decision_id: source.metadata?.decision_id ?? null,
+      })),
+      scores: item.scores ?? null,
+    };
+  });
 }
 
 export function groupDecisionMatches(memories, matches) {
@@ -121,11 +157,13 @@ export function groupDecisionMatches(memories, matches) {
   return [...byId.values()];
 }
 
-function structuredResponse(response, requiredFields) {
+function structuredResponse(response, requiredFields, stage) {
   const output = response?.structured_output;
   if (!output || typeof output !== 'object' || Array.isArray(output) ||
       requiredFields.some((field) => !(field in output))) {
-    throw new Error(`Hindsight reflect did not return valid structured output${response?.structured_output_error ? `: ${response.structured_output_error}` : ''}`);
+    throw new MemoryAiError('HINDSIGHT_INVALID_RESPONSE', stage, 'Hindsight reflect did not return valid structured output.', {
+      retryable: Boolean(response?.structured_output_error),
+    });
   }
   return output;
 }
@@ -137,32 +175,32 @@ export function createMemoryAi({ client, bankId }) {
   const bank = nonEmptyString(bankId, 'bankId');
   const recallRelated = async (proposal) => {
     const query = nonEmptyString(proposal, 'proposal');
-    const response = await client.recall(bank, query, {
+    const response = await callHindsight('recall', () => client.recall(bank, query, {
       budget: 'mid',
       maxTokens: 4096,
       includeSourceFacts: true,
-    });
+    }));
     return recalledMemories(response);
   };
 
   return {
     async setupBank() {
-      return client.createBank(bank, {
+      return callHindsight('setup', () => client.createBank(bank, {
         name: 'PRECEDENT technical decisions',
         retainMission: 'Extract technical goals, attempted approaches, outcomes, causes, final decisions, assumptions, and conditions for reconsideration. Preserve uncertainty and source context.',
         reflectMission: 'Help engineers understand prior technical decisions. Distinguish recorded history from current analysis, cite evidence, and leave final decisions to humans.',
-      });
+      }));
     },
 
     async retainDecision(input) {
       const decision = validateDecision(input);
-      const result = await client.retain(bank, formatDecision(decision), {
+      const result = await callHindsight('retain', () => client.retain(bank, formatDecision(decision), {
         documentId: `decision:${decision.id}`,
         context: 'PRECEDENT technical decision record',
         metadata: { decision_id: decision.id, title: decision.title },
         ...(decision.date && /^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(decision.date) ? { timestamp: decision.date } : {}),
         async: false,
-      });
+      }));
       return { decision_id: decision.id, document_id: `decision:${decision.id}`, result };
     },
 
@@ -185,15 +223,15 @@ export function createMemoryAi({ client, bankId }) {
         'Separate historical facts from your current interpretation. Do not invent outcomes or assumptions. If unknown, say so.',
         'An old failure is not a permanent prohibition. The engineer makes the final decision.',
       ].join('\n');
-      const response = await client.reflect(bank, prompt, {
+      const response = await callHindsight('analyze', () => client.reflect(bank, prompt, {
         budget: 'mid',
         responseSchema: ANALYSIS_SCHEMA,
         includeFacts: true,
-      });
-      const output = structuredResponse(response, ['has_relevant_precedent', 'no_match_reason', 'summary', 'matches']);
+      }));
+      const output = structuredResponse(response, ['has_relevant_precedent', 'no_match_reason', 'summary', 'matches'], 'analyze');
       if (typeof output.has_relevant_precedent !== 'boolean' || typeof output.no_match_reason !== 'string' ||
           typeof output.summary !== 'string' || !Array.isArray(output.matches)) {
-        throw new Error('Hindsight analysis has an invalid structure');
+        throw new MemoryAiError('HINDSIGHT_INVALID_RESPONSE', 'analyze', 'Hindsight analysis has an invalid structure.');
       }
       const allowedIds = new Set(memories.map(({ id }) => id));
       const matches = output.matches.filter((match) =>
@@ -224,18 +262,18 @@ export function createMemoryAi({ client, bankId }) {
         'Preserve the historical outcome. Identify the challenged assumptions and missing evidence.',
         'Use still_relevant, may_have_changed, or insufficient_information. Never make the final engineering decision.',
       ].join('\n');
-      const response = await client.reflect(bank, prompt, {
+      const response = await callHindsight('reassess', () => client.reflect(bank, prompt, {
         budget: 'mid',
         responseSchema: REASSESSMENT_SCHEMA,
         includeFacts: true,
-      });
-      const output = structuredResponse(response, ['status', 'reason', 'challenged_assumptions', 'evidence_gaps']);
+      }));
+      const output = structuredResponse(response, ['status', 'reason', 'challenged_assumptions', 'evidence_gaps'], 'reassess');
       if (!REASSESSMENT_SCHEMA.properties.status.enum.includes(output.status) ||
           typeof output.reason !== 'string' ||
           !Array.isArray(output.challenged_assumptions) ||
           !Array.isArray(output.evidence_gaps) ||
           [...output.challenged_assumptions, ...output.evidence_gaps].some((item) => typeof item !== 'string')) {
-        throw new Error('Hindsight reassessment has an invalid structure');
+        throw new MemoryAiError('HINDSIGHT_INVALID_RESPONSE', 'reassess', 'Hindsight reassessment has an invalid structure.');
       }
       return { decision_id: decision.id, changed_circumstances: changed, ...output, text: response.text };
     },
