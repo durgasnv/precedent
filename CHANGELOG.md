@@ -79,3 +79,18 @@ The backend can map each code to an appropriate API response or user message whi
 ### Process
 
 Mapped the Hindsight client's HTTP status errors at the service boundary and checked the error contract with a mocked client. Left input validation separate from provider failures.
+
+## 2026-09-27 — Verify the live Hindsight demo path
+
+### Change
+
+- Added an unrelated-proposal assertion to the repeatable live smoke command.
+- Recorded the outcome of a live Cloud retain, recall, analysis, and reassessment check.
+
+### How the feature works
+
+The smoke command seeds stable decisions, verifies related recall, checks structured analysis and reassessment, then confirms that an unrelated proposal has no accepted decision match even when Recall returns candidate facts.
+
+### Process
+
+Used the local ignored `.env` to run the live integration twice without printing or committing the API key. Three decision recalls passed, the WebSocket proposal produced supported fact matches, the changed proxy scenario returned `may_have_changed`, and an unrelated proposal returned zero relevant decisions. Match counts varied between runs, so the repeatable check verifies expected decision IDs and outcomes.

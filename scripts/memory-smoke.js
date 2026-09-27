@@ -30,10 +30,15 @@ const reassessment = await memory.reassessDecision(
   demoDecisions[0],
   'Enterprise customers now use network infrastructure without the former proxy restriction.',
 );
+const unrelated = await memory.analyzeProposal('Should we replace office coffee mugs with paper cups?');
+if (unrelated.analysis !== null || unrelated.decision_matches.length !== 0) {
+  throw new Error('Smoke test failed: unrelated proposal was treated as a relevant precedent');
+}
 
 console.log(JSON.stringify({
   retained_decision_ids: demoDecisions.map((decision) => decision.id),
   recalls,
   analysis: analysis.analysis,
   reassessment,
+  unrelated_proposal: { recalled_facts: unrelated.memories.length, relevant_decisions: unrelated.decision_matches.length },
 }, null, 2));
