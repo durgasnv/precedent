@@ -36,11 +36,8 @@ class OrchestratorService {
     try {
       retentionResult = await aiMemoryService.retainDecision(createdDecision);
     } catch (err) {
-      retentionResult = {
-        connected: false,
-        retained: false,
-        error: err.message
-      };
+      decisionModel.removeById(createdDecision.id);
+      throw err;
     }
 
     return {
@@ -71,6 +68,13 @@ class OrchestratorService {
     let targetDecision = null;
     if (payload.decisionId) {
       targetDecision = decisionModel.getById(payload.decisionId);
+    }
+
+    if (!targetDecision) {
+      const error = new Error('Decision record not found.');
+      error.statusCode = 404;
+      error.code = 'NOT_FOUND';
+      throw error;
     }
 
     // Delegates to Person 1's AI & Memory service boundary

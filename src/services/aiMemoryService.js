@@ -1,14 +1,4 @@
-/**
- * Integration Boundary for Person 1 — Memory + AI (Hindsight & LLM)
- *
- * Person 1 owns:
- * - Hindsight integration (retain & recall)
- * - Structured prompt generation and LLM reasoning
- * - Assumption comparison logic
- *
- * Person 1 can connect their module here by calling `registerProvider(provider)`
- * or exporting their service functions matching this interface contract.
- */
+import { createMemoryAiFromEnv } from '../memory-ai.js';
 
 class ServiceNotConnectedError extends Error {
   constructor(message) {
@@ -22,6 +12,7 @@ class ServiceNotConnectedError extends Error {
 class AIMemoryServiceBoundary {
   constructor() {
     this.provider = null;
+    this.setupPromise = null;
   }
 
   /**
@@ -35,51 +26,65 @@ class AIMemoryServiceBoundary {
    */
   registerProvider(provider) {
     this.provider = provider;
+    this.setupPromise = null;
+  }
+
+  async getProvider() {
+    if (this.provider) return this.provider;
+    if (!process.env.HINDSIGHT_BASE_URL || !process.env.HINDSIGHT_BANK_ID) {
+      throw new ServiceNotConnectedError('Hindsight is not configured on the server.');
+    }
+    const memory = createMemoryAiFromEnv();
+    this.provider = {
+      retainDecision: (decision) => memory.retainDecision(decision),
+      analyzeProposal: ({ proposal }) => memory.analyzeProposal(proposal),
+      reassessAssumptions: ({ decisionRecord, changedCircumstances }) =>
+        memory.reassessDecision(decisionRecord, changedCircumstances),
+    };
+    this.setupPromise = memory.setupBank().catch((error) => {
+      this.provider = null;
+      this.setupPromise = null;
+      throw error;
+    });
+    return this.provider;
+  }
+
+  async readyProvider() {
+    const provider = await this.getProvider();
+    if (this.setupPromise) await this.setupPromise;
+    return provider;
   }
 
   /**
    * Check if Person 1's provider is currently connected.
    */
   isConnected() {
-    return Boolean(this.provider && typeof this.provider.analyzeProposal === 'function');
+    return Boolean(this.provider || (process.env.HINDSIGHT_BASE_URL && process.env.HINDSIGHT_BANK_ID));
   }
 
   /**
    * Retain a technical decision in Hindsight memory.
    */
   async retainDecision(decision) {
-    if (this.provider && typeof this.provider.retainDecision === 'function') {
-      return await this.provider.retainDecision(decision);
-    }
-    return {
-      connected: false,
-      retained: false,
-      message: 'Person 1 Memory service provider not connected. Decision stored in local memory layer.'
-    };
+    const provider = await this.readyProvider();
+    return provider.retainDecision(decision);
   }
 
   /**
    * Recall related past decisions and analyze a proposal using LLM reasoning.
    */
   async analyzeProposal(payload) {
-    if (this.isConnected()) {
-      return await this.provider.analyzeProposal(payload);
-    }
-    throw new ServiceNotConnectedError(
-      'Person 1 Memory and AI service is not connected. See src/services/aiMemoryService.js to integrate Person 1 Hindsight/LLM modules.'
-    );
+    const provider = await this.readyProvider();
+    return provider.analyzeProposal(payload);
   }
 
   /**
    * Reassess historical assumptions against changed circumstances.
    */
   async reassessAssumptions(payload) {
-    if (this.isConnected() && typeof this.provider.reassessAssumptions === 'function') {
-      return await this.provider.reassessAssumptions(payload);
-    }
-    throw new ServiceNotConnectedError(
-      'Person 1 Assumption Reassessment service is not connected. See src/services/aiMemoryService.js to integrate Person 1 modules.'
-    );
+    const provider = await this.readyProvider();
+    if (!provider.reassessAssumptions) throw new ServiceNotConnectedError('Reassessment is unavailable.');
+    return provider.reassessAssumptions(payload);
   }
 }
 

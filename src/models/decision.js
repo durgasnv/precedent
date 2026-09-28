@@ -71,6 +71,10 @@ class DecisionModel {
     return this.decisions.find(d => d.id === String(id)) || null;
   }
 
+  removeById(id) {
+    this.decisions = this.decisions.filter(decision => decision.id !== id);
+  }
+
   /**
    * Create and store a new decision record
    */
@@ -84,7 +88,7 @@ class DecisionModel {
       problem: String(data.problem).trim(),
       approach: String(data.approach).trim(),
       outcome: String(data.outcome).trim(),
-      failure_reason: String(data.failure_reason).trim(),
+      failure_reason: String(data.failure_reason ?? '').trim(),
       alternatives: DecisionModel.formatArrayField(data.alternatives),
       decision: String(data.decision).trim(),
       assumptions: DecisionModel.formatArrayField(data.assumptions),

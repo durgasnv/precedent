@@ -19,13 +19,12 @@ const validateRecordDecision = (req, res, next) => {
     'problem',
     'approach',
     'outcome',
-    'failure_reason',
     'decision'
   ];
 
   const missingFields = requiredFields.filter(field => {
     const val = body[field];
-    return val === undefined || val === null || (typeof val === 'string' && val.trim() === '');
+    return typeof val !== 'string' || val.trim() === '';
   });
 
   if (missingFields.length > 0) {

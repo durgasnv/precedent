@@ -3,6 +3,7 @@
  */
 
 import { ServiceNotConnectedError } from '../services/aiMemoryService.js';
+import { MemoryAiError } from '../memory-ai.js';
 
 // Handle 404 Not Found for unknown API routes
 const notFoundHandler = (req, res) => {
@@ -34,6 +35,15 @@ const errorHandler = (err, req, res, next) => {
         message: err.message
       }
     });
+  }
+
+  if (err instanceof MemoryAiError) {
+    const status = err.code === 'HINDSIGHT_AUTH' ? 502 : err.code === 'HINDSIGHT_CREDITS' ? 503 : err.retryable ? 503 : 502;
+    return res.status(status).json({ error: { code: err.code, message: err.message, retryable: err.retryable } });
+  }
+
+  if (err instanceof TypeError) {
+    return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: err.message } });
   }
 
   // Handle explicit status codes on error objects

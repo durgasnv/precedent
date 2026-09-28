@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 
 import app from '../src/app.js';
-import { aiMemoryService } from '../src/services/aiMemoryService.js';
+import { aiMemoryService, ServiceNotConnectedError } from '../src/services/aiMemoryService.js';
 
 let server;
 let baseUrl;
@@ -102,6 +102,7 @@ test('4. GET /api/decisions/:id - Inspect non-existent decision', async () => {
 });
 
 test('5. POST /api/decisions - Record new decision (valid payload)', async () => {
+  aiMemoryService.registerProvider({ retainDecision: async () => ({ retained: true }) });
   const payload = {
     title: 'GraphQL API migration',
     problem: 'Reduce frontend network requests',
@@ -124,19 +125,33 @@ test('5. POST /api/decisions - Record new decision (valid payload)', async () =>
   // Verify it appears in GET /api/decisions
   const listRes = await request('GET', '/api/decisions');
   assert.equal(listRes.body.count, 2);
+  aiMemoryService.registerProvider(null);
 });
 
 test('6. POST /api/decisions - Record decision with missing required fields', async () => {
   const payload = {
     title: 'Incomplete decision',
     problem: 'Testing validation'
-    // missing approach, outcome, failure_reason, decision
+    // missing approach, outcome, decision
   };
 
   const res = await request('POST', '/api/decisions', payload);
   assert.equal(res.status, 400);
   assert.equal(res.body.error.code, 'VALIDATION_ERROR');
-  assert.ok(res.body.error.details.length >= 4);
+  assert.ok(res.body.error.details.length >= 3);
+});
+
+test('failed Hindsight retention does not leave a locally stored decision', async () => {
+  aiMemoryService.registerProvider({ retainDecision: async () => { throw new ServiceNotConnectedError(); } });
+  const before = await request('GET', '/api/decisions');
+  const response = await request('POST', '/api/decisions', {
+    title: 'Failed retain', problem: 'Check memory', approach: 'Try a new plan',
+    outcome: 'Unknown', failure_reason: '', decision: 'Wait for evidence',
+  });
+  const after = await request('GET', '/api/decisions');
+  assert.equal(response.status, 503);
+  assert.equal(after.body.count, before.body.count);
+  aiMemoryService.registerProvider(null);
 });
 
 test('7. POST /api/analyze - Without Person 1 integration provider (503 Service Unavailable)', async () => {
@@ -145,7 +160,7 @@ test('7. POST /api/analyze - Without Person 1 integration provider (503 Service 
   });
   assert.equal(res.status, 503);
   assert.equal(res.body.error.code, 'SERVICE_UNAVAILABLE');
-  assert.ok(res.body.error.message.includes('Person 1'));
+  assert.ok(res.body.error.message.includes('Hindsight'));
 });
 
 test('8. POST /api/analyze - With missing required payload (400 Bad Request)', async () => {

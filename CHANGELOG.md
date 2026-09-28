@@ -1,6 +1,22 @@
 # PRECEDENT Change Log
 
-This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module and a React frontend. The backend API is still a separate team task.
+This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
+
+## 2026-09-28 — Connect the API to the Person 1 Hindsight module
+
+### Change
+
+- Replaced the Person 2 placeholder service with a lazy adapter to the existing Person 1 retain, analysis, and reassessment methods.
+- Made decision recording fail when Hindsight retention fails, removing the provisional in-memory record so a successful API response means memory retention was confirmed.
+- Mapped Hindsight failures to safe API responses and aligned the backend's optional failure reason with the Person 1 schema.
+
+### How the feature works
+
+The first memory operation creates a Hindsight client from server environment variables and sets up the bank once. The service boundary translates the backend's payload objects into the Person 1 module's function arguments. A decision is placed in the in-memory model while its retain runs; if retain fails, it is removed and the API returns an error. Reassessment requires a stored decision and preserves its historical content. Hindsight keys stay on the server.
+
+### Process
+
+Compared the two service interfaces, connected them at the existing boundary, adjusted failure handling and tests, and ran the full API and memory test suite with local loopback access.
 
 ## 2026-09-28 — Merge the Person 2 Express backend
 

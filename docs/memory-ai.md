@@ -1,6 +1,6 @@
 # Memory and AI module
 
-This is Person 1's backend module. It exports `createMemoryAi({ client, bankId })` for dependency injection and `createMemoryAiFromEnv()` for a configured Hindsight client. The HTTP routes and UI are separate team tasks.
+This is Person 1's backend module. It exports `createMemoryAi({ client, bankId })` for dependency injection and `createMemoryAiFromEnv()` for a configured Hindsight client. The Express service boundary in `src/services/aiMemoryService.js` now connects it to the API routes; the frontend reaches it through those routes.
 
 ## How it works
 
@@ -12,7 +12,7 @@ This is Person 1's backend module. It exports `createMemoryAi({ client, bankId }
 
 The record shape uses `id`, `title`, `problem`, `approach`, `outcome`, `failure_reason`, `alternatives`, `decision`, `assumptions`, `reconsider_when`, optional `evidence`, and optional `date`. The first six fields except `failure_reason` are required non-empty strings; list fields are arrays of strings. `failure_reason` can be empty for a successful experiment. A full date is passed to Hindsight as the event timestamp; a partial date such as `2026-04` stays in the retained text without inventing a specific day.
 
-The backend should store the authoritative decision record separately. Hindsight extracts facts from retained content, so recall can return several facts from one decision and does not guarantee a complete copy of the original record. Use `decision_id` to link a recalled fact to the stored record.
+The backend stores the authoritative decision record separately in an in-memory model. Hindsight extracts facts from retained content, so recall can return several facts from one decision and does not guarantee a complete copy of the original record. Use `decision_id` to link a recalled fact to the stored record. The model is cleared on server restart; lasting record storage is still needed for deployment.
 
 Provider failures throw `MemoryAiError` with a `code`, `stage`, and `retryable` flag. Codes are `HINDSIGHT_AUTH`, `HINDSIGHT_CREDITS`, `HINDSIGHT_UNAVAILABLE`, `HINDSIGHT_REQUEST_FAILED`, and `HINDSIGHT_INVALID_RESPONSE`. Input validation still throws `TypeError`. The public error message omits provider details; backend logs can inspect `cause` without exposing credentials or provider responses to clients. Retain writes are not automatically retried by this module.
 
