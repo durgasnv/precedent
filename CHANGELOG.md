@@ -2,6 +2,22 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module and a React frontend. The backend API is still a separate team task.
 
+## 2026-09-28 — Show live assumption reassessment in the frontend
+
+### Change
+
+- Wired the assumption form to the planned reassessment route when a backend URL is configured.
+- Added loading and retryable error views, original-assumption context, and a separate current reassessment panel.
+- Limited the local demo to read-only prepared examples so custom text cannot appear to have been analyzed.
+
+### How the feature works
+
+The user selects a seeded decision and enters changed circumstances. The frontend sends its ID and the new text to `POST /api/reassess`, then displays the Person 1 module's status, reason, challenged assumptions, and evidence gaps. The decision card and source fixture are not modified. Without the backend, the page displays only the prepared example for each fixture.
+
+### Process
+
+Used the existing Person 1 reassessment return fields and the documented route name. Kept the browser free of Hindsight credentials, added separate demo and live behaviors, and checked lint and the production build.
+
 ## 2026-09-28 — Prepare live proposal analysis in the frontend
 
 ### Change
