@@ -10,3 +10,4 @@ PRECEDENT is a planned institutional memory application for technical decisions 
 - [Build phases](phases.md)
 - [Content submission plan](content-submission-plan.md)
 - [Change log and workflow](CHANGELOG.md)
+- [Memory and AI module](docs/memory-ai.md)

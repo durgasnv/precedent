@@ -1,0 +1,16 @@
+{
+  "name": "precedent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "memory:seed": "node --env-file=.env scripts/seed-decisions.js",
+    "memory:smoke": "node --env-file=.env scripts/memory-smoke.js"
+  },
+  "dependencies": {
+    "@vectorize-io/hindsight-client": "^0.10.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
