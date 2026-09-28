@@ -2,6 +2,10 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Plan flexible examples and evolving decision memory
+
+Added `docs/flexible-memory-roadmap.md` with the proposed features, delivery order, acceptance criteria, and implementation process. The first increment covers persistent records, isolated collections, optional context, and a real timeline. Import, cross-decision alerts, outcome feedback, comparison, experiment plans, and playbooks remain explicitly planned. Reviewed the current record model, memory adapter, frontend, and existing requirements before choosing this order.
+
 ## 2026-09-28 — Share demo decisions across memory, API, and frontend
 
 ### Change

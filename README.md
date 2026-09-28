@@ -31,3 +31,4 @@ Configure `.env` at the repository root with the Hindsight instance URL, bank ID
 - [Content submission plan](content-submission-plan.md)
 - [Change log and workflow](CHANGELOG.md)
 - [Memory and AI module](docs/memory-ai.md)
+- [Flexible decision memory roadmap](docs/flexible-memory-roadmap.md)
