@@ -4,7 +4,7 @@ export default function AssumptionCheck({ check }) {
   if (!check) return null
   return (
     <section className="ai-panel">
-      <div className="ai-stamp">AI analysis, generated just now</div>
+      <div className="ai-stamp">Prepared demo reassessment</div>
       <div className="new-circ">
         <h4>New circumstance</h4>
         <p>{check.newCircumstance}</p>

@@ -21,7 +21,7 @@ export default function Sidebar({ pages, current, onNavigate, memoryCount }) {
         <span className="pulse" aria-hidden="true" />
         <div>
           <strong>Memory connected</strong>
-          <span>{memoryCount} decisions indexed</span>
+          <span>{memoryCount} demo decisions</span>
         </div>
       </div>
     </aside>

@@ -109,3 +109,19 @@ The frontend currently presents a proposal inbox, memory matches, decision recor
 ### Process
 
 Merged the frontend branch into a clean Person 1 worktree, reviewed the staged files, and checked for conflicts. The merge had none.
+
+## 2026-09-28 — Align the frontend demo with Person 1 records
+
+### Change
+
+- Made the frontend demo import the same three decision fixtures used by Hindsight seeding, with UI-only presentation details kept in the frontend.
+- Aligned decision IDs, assumption examples, and timeline events with those fixtures; removed made-up match percentages and labeled local demo output clearly.
+- Replaced the Vite page title and favicon with PRECEDENT branding, removed unused starter icons, rewrote the README instructions, and corrected the inbox selection state to pass the React lint rule.
+
+### How the feature works
+
+The frontend adapts the shared decision records for display, then uses a local keyword search to demonstrate proposal matching. Person 1's Hindsight module independently retains and recalls the same record IDs. An HTTP backend must connect the UI to live Hindsight results; the API key stays server-side.
+
+### Process
+
+Compared the frontend mock records and labels with the Person 1 fixture schema and service return fields. Reused the fixtures as the source of demo decision content, adjusted the UI examples, corrected the lint finding, and documented the current data flow and setup commands.

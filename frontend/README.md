@@ -1,16 +1,20 @@
-# React + Vite
+# PRECEDENT frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This React and Vite frontend demonstrates the planned decision workflow: propose a change, review related decision records, inspect original blockers, compare changed assumptions, and browse a timeline.
 
-Currently, two official plugins are available:
+## Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Use Node.js 24 or a Node version supported by the Vite version in `package-lock.json`.
 
-## React Compiler
+```bash
+npm ci
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Open the local URL printed by Vite. `npm run build` checks the production bundle, and `npm run lint` checks the source.
 
-## Expanding the ESLint configuration
+## Current data flow
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+`src/mockData.js` imports the three records in `../fixtures/demo-decisions.js`, the same records used by the Hindsight seed and smoke scripts. It adds presentation details and prepared reassessment examples. Proposal matching is a local keyword demonstration. The UI labels these records and assessments as demo content; it does not call Hindsight yet.
+
+The backend will eventually expose decision, analysis, and reassessment routes and map `decision_id` and source fact IDs from the Person 1 module into UI records. Keep `HINDSIGHT_API_KEY` on that server. The frontend needs no access to the key.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import ProposalInput from '../components/ProposalInput'
 import LoadingState from '../components/LoadingState'
 import EmptyState from '../components/EmptyState'
@@ -10,11 +10,10 @@ import { getDecision, assumptionChecks } from '../mockData'
 export default function Inbox({ proposal, setProposal, status, matches, analyze }) {
   const [selected, setSelected] = useState(null)
 
-  useEffect(() => {
-    setSelected(matches[0]?.decisionId ?? null)
-  }, [matches])
-
-  const decision = selected ? getDecision(selected) : null
+  const selectedId = matches.some((match) => match.decisionId === selected)
+    ? selected
+    : matches[0]?.decisionId ?? null
+  const decision = selectedId ? getDecision(selectedId) : null
 
   return (
     <div className="stack">
@@ -25,20 +24,20 @@ export default function Inbox({ proposal, setProposal, status, matches, analyze 
       {status === 'done' && matches.length === 0 && (
         <EmptyState
           title="No related history found"
-          body="Nothing in memory looks like this proposal. Try naming the technology or the problem it solves."
+          body="No demo record matched this proposal. Try naming the technology or the problem it solves."
         />
       )}
 
       {status === 'done' && decision && (
         <>
-          <h2 className="section-title">Historical memory</h2>
+          <h2 className="section-title">Demo decision history</h2>
           <div className="memory-list">
             {matches.map((m) => (
               <MemoryCard
                 key={m.decisionId}
                 match={m}
                 decision={getDecision(m.decisionId)}
-                active={m.decisionId === selected}
+                active={m.decisionId === selectedId}
                 onOpen={setSelected}
               />
             ))}

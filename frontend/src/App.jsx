@@ -25,7 +25,7 @@ export default function App() {
   const analyze = () => {
     if (!proposal.trim() || status === 'loading') return
     setStatus('loading')
-    // TODO(backend): replace this timeout with a call to the Hindsight/API endpoint
+    // TODO(backend): replace local matching with an API call; keep the Hindsight key server-side.
     setTimeout(() => {
       setMatches(findMatches(proposal))
       setStatus('done')
@@ -41,7 +41,7 @@ export default function App() {
         <Header
           title={PAGES[page].label}
           subtitle={PAGES[page].subtitle}
-          status={status === 'loading' ? 'Searching memory' : `${decisions.length} records in memory`}
+          status={status === 'loading' ? 'Searching demo records' : `${decisions.length} demo records`}
           busy={status === 'loading'}
         />
         <div className="content">
