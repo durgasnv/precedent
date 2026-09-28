@@ -25,20 +25,12 @@ class OrchestratorService {
 
   /**
    * Record a new technical decision.
-   * Flow: validation (via middleware) -> data store -> Person 1 retain -> response
+   * Flow: validate/assign ID -> Person 1 retain -> persist record -> response
    */
   async recordDecision(data) {
-    // 1. Store decision in local backend model
-    const createdDecision = decisionModel.create(data);
-
-    // 2. Pass to Person 1 retain module interface
-    let retentionResult;
-    try {
-      retentionResult = await aiMemoryService.retainDecision(createdDecision);
-    } catch (err) {
-      decisionModel.removeById(createdDecision.id);
-      throw err;
-    }
+    const createdDecision = decisionModel.prepare(data);
+    const retentionResult = await aiMemoryService.retainDecision(createdDecision);
+    decisionModel.insert(createdDecision);
 
     return {
       decision: createdDecision,

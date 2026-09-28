@@ -6,8 +6,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 
-import app from '../src/app.js';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { aiMemoryService, ServiceNotConnectedError } from '../src/services/aiMemoryService.js';
+
+const storageDirectory = mkdtempSync(join(tmpdir(), 'precedent-api-'));
+process.env.DECISION_STORE_PATH = join(storageDirectory, 'decisions.json');
+const { default: app } = await import('../src/app.js');
 
 let server;
 let baseUrl;
@@ -26,6 +32,7 @@ test.after(async () => {
   await new Promise((resolve) => {
     server.close(resolve);
   });
+  rmSync(storageDirectory, { recursive: true, force: true });
 });
 
 // Helper for HTTP requests

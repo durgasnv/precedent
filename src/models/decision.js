@@ -1,92 +1,67 @@
-/**
- * Decision Memory Model & In-Memory Data Store
- *
- * Schema structure as documented in plan.md and requirements.md:
- * - id: string (unique identifier)
- * - title: string (required)
- * - problem: string (required)
- * - approach: string (required)
- * - outcome: string (required)
- * - failure_reason: string (required)
- * - alternatives: array of strings (optional, default [])
- * - decision: string (required)
- * - assumptions: array of strings (optional, default [])
- * - reconsider_when: array of strings (optional, default [])
- * - evidence: array of strings (optional, default [])
- * - date: string (optional, default YYYY-MM)
- * - createdAt: ISO string
- */
-
+import { randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { demoDecisions } from '../../fixtures/demo-decisions.js';
+import { validateDecision } from '../memory-ai.js';
 
-let idCounter = 1;
-
-const seedDecisions = demoDecisions.map(record => ({
-  ...record,
-  createdAt: `${record.date}T00:00:00.000Z`,
-}));
-
-class DecisionModel {
-  constructor() {
-    this.decisions = [...seedDecisions];
+// Atomic snapshots for one backend process. Use a persistent disk in deployment.
+export class DecisionModel {
+  constructor({ filePath = null, seeds = demoDecisions } = {}) {
+    this.filePath = filePath;
+    if (filePath && existsSync(filePath)) {
+      this.state = JSON.parse(readFileSync(filePath, 'utf8'));
+      if (this.state.version !== 1 || !Array.isArray(this.state.decisions) ||
+          this.state.decisions.some(record => typeof record.id !== 'string') ||
+          new Set(this.state.decisions.map(record => record.id)).size !== this.state.decisions.length) {
+        throw new Error('Decision storage is invalid. Restore a valid backup before starting the server.');
+      }
+    } else {
+      this.state = { version: 1, decisions: seeds.map(record => ({
+        ...structuredClone(record), createdAt: `${record.date}T00:00:00.000Z`,
+      })) };
+      this.commit(this.state);
+    }
   }
 
-  /**
-   * Format array or string inputs safely into array of strings
-   */
-  static formatArrayField(field) {
-    if (!field) return [];
-    if (Array.isArray(field)) return field.map(item => String(item).trim()).filter(Boolean);
-    if (typeof field === "string") return [field.trim()].filter(Boolean);
-    return [];
+  commit(next) {
+    if (this.filePath) {
+      mkdirSync(dirname(this.filePath), { recursive: true });
+      const temporary = `${this.filePath}.${randomUUID()}.tmp`;
+      try {
+        writeFileSync(temporary, JSON.stringify(next, null, 2), { mode: 0o600, flag: 'wx' });
+        renameSync(temporary, this.filePath);
+      } finally {
+        rmSync(temporary, { force: true });
+      }
+    }
+    this.state = structuredClone(next);
   }
 
-  /**
-   * Get all stored decision records
-   */
   getAll() {
-    return [...this.decisions];
+    return structuredClone(this.state.decisions);
   }
 
-  /**
-   * Get a single decision record by ID
-   */
   getById(id) {
-    if (!id) return null;
-    return this.decisions.find(d => d.id === String(id)) || null;
+    return structuredClone(this.state.decisions.find(record => record.id === id) || null);
   }
 
-  removeById(id) {
-    this.decisions = this.decisions.filter(decision => decision.id !== id);
-  }
-
-  /**
-   * Create and store a new decision record
-   */
-  create(data) {
-    const now = new Date();
-    const defaultDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-    const newDecision = {
-      id: `dec_${idCounter++}`,
-      title: String(data.title).trim(),
-      problem: String(data.problem).trim(),
-      approach: String(data.approach).trim(),
-      outcome: String(data.outcome).trim(),
-      failure_reason: String(data.failure_reason ?? '').trim(),
-      alternatives: DecisionModel.formatArrayField(data.alternatives),
-      decision: String(data.decision).trim(),
-      assumptions: DecisionModel.formatArrayField(data.assumptions),
-      reconsider_when: DecisionModel.formatArrayField(data.reconsider_when),
-      evidence: DecisionModel.formatArrayField(data.evidence),
-      date: data.date ? String(data.date).trim() : defaultDate,
-      createdAt: now.toISOString()
+  prepare(data) {
+    const now = new Date().toISOString();
+    return {
+      ...validateDecision({ ...data, id: randomUUID(), date: data.date || now.slice(0, 10) }),
+      createdAt: now,
     };
+  }
 
-    this.decisions.push(newDecision);
-    return newDecision;
+  insert(record) {
+    if (this.getById(record.id)) throw new Error('A decision with this ID already exists.');
+    this.commit({ ...this.state, decisions: [...this.state.decisions, record] });
+    return structuredClone(record);
+  }
+
+  create(data) {
+    return this.insert(this.prepare(data));
   }
 }
 
-// Export singleton instance
-export default new DecisionModel();
+export default new DecisionModel({ filePath: resolve(process.env.DECISION_STORE_PATH || 'data/decisions.json') });

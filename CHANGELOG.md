@@ -2,6 +2,10 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Persist decision records and use stable UUIDs
+
+Replaced the process-only list with atomic JSON snapshots at `DECISION_STORE_PATH` (default `data/decisions.json`, ignored by Git). New decisions use UUIDs and become visible after successful Hindsight retention and a local save. Reads return copies, and malformed stored data stops startup instead of being erased. The backend uses one process and a persistent disk; Hindsight retention and file writes are not a distributed transaction. Added restart, identity, uncommitted-draft, and corrupt-file checks, and isolated API tests in temporary storage.
+
 ## 2026-09-28 — Plan flexible examples and evolving decision memory
 
 Added `docs/flexible-memory-roadmap.md` with the proposed features, delivery order, acceptance criteria, and implementation process. The first increment covers persistent records, isolated collections, optional context, and a real timeline. Import, cross-decision alerts, outcome feedback, comparison, experiment plans, and playbooks remain explicitly planned. Reviewed the current record model, memory adapter, frontend, and existing requirements before choosing this order.
