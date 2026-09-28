@@ -2,6 +2,22 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Align the frontend with the merged Express API
+
+### Change
+
+- Unwrapped Person 2's `{ success, data }` API responses and displayed its nested error messages.
+- Sent the reassessment fields in the backend's camel-case request format.
+- Removed client-generated decision IDs because the backend assigns them, and added a frontend environment example pointing to port 5000.
+
+### How the feature works
+
+`frontend/src/api.js` is the only browser-side route adapter. It returns the `data` body to pages and converts API error envelopes into readable messages. The browser sends only decision text and IDs; Hindsight credentials remain in the backend environment. In live mode, the decision form waits for the backend-assigned record before showing it.
+
+### Process
+
+Compared every frontend request and response assumption with the newly merged routes, updated the adapter and form, then checked the frontend lint and production build.
+
 ## 2026-09-28 — Connect the API to the Person 1 Hindsight module
 
 ### Change

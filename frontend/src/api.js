@@ -21,14 +21,14 @@ async function request(path, body, method = 'POST') {
     throw new Error('The backend returned a response PRECEDENT could not read.')
   }
   if (!response.ok) {
-    throw new Error(typeof data?.message === 'string' ? data.message : 'The request failed. Please try again.')
+    throw new Error(typeof data?.error?.message === 'string' ? data.error.message : 'The request failed. Please try again.')
   }
-  return data
+  return data?.data ?? data
 }
 
 export const analyzeProposal = (proposal) => request('/api/analyze', { proposal })
 export const reassessDecision = (decision_id, changed_circumstances) =>
-  request('/api/reassess', { decision_id, changed_circumstances })
+  request('/api/reassess', { decisionId: decision_id, changedCircumstances: changed_circumstances })
 export const listDecisions = () => request('/api/decisions', undefined, 'GET')
 export const fetchDecision = (id) => request(`/api/decisions/${encodeURIComponent(id)}`, undefined, 'GET')
 export const createDecision = (decision) => request('/api/decisions', decision)

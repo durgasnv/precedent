@@ -26,7 +26,6 @@ export default function DecisionForm({ onSave }) {
     const record = Object.fromEntries(Object.entries(values).map(([key, value]) => [
       key, lists.has(key) ? value.split('\n').map((item) => item.trim()).filter(Boolean) : value.trim(),
     ]))
-    record.id = crypto.randomUUID()
     record.date = new Date().toISOString().slice(0, 10)
     try {
       await onSave(record)
