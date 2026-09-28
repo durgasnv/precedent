@@ -82,17 +82,17 @@ test('2. GET /api/decisions - List seed decisions', async () => {
   assert.equal(res.status, 200);
   assert.equal(res.body.success, true);
   assert.ok(Array.isArray(res.body.data));
-  assert.ok(res.body.count >= 1);
-  assert.equal(res.body.data[0].id, 'dec_1');
+  assert.equal(res.body.count, 3);
+  assert.equal(res.body.data[0].id, 'demo-websocket-notifications');
   assert.equal(res.body.data[0].title, 'WebSocket notification migration');
 });
 
 test('3. GET /api/decisions/:id - Inspect existing decision', async () => {
-  const res = await request('GET', '/api/decisions/dec_1');
+  const res = await request('GET', '/api/decisions/demo-websocket-notifications');
   assert.equal(res.status, 200);
   assert.equal(res.body.success, true);
-  assert.equal(res.body.data.id, 'dec_1');
-  assert.equal(res.body.data.decision, 'Remain on SSE');
+  assert.equal(res.body.data.id, 'demo-websocket-notifications');
+  assert.equal(res.body.data.decision, 'Use Server-Sent Events for notifications');
 });
 
 test('4. GET /api/decisions/:id - Inspect non-existent decision', async () => {
@@ -124,7 +124,7 @@ test('5. POST /api/decisions - Record new decision (valid payload)', async () =>
 
   // Verify it appears in GET /api/decisions
   const listRes = await request('GET', '/api/decisions');
-  assert.equal(listRes.body.count, 2);
+  assert.equal(listRes.body.count, 4);
   aiMemoryService.registerProvider(null);
 });
 
@@ -175,7 +175,7 @@ test('9. POST /api/analyze - With Person 1 integration connected', async () => {
     retainDecision: async (d) => ({ connected: true, retained: true }),
     analyzeProposal: async (p) => ({
       recalledMemory: {
-        id: 'dec_1',
+        id: 'demo-websocket-notifications',
         title: 'WebSocket notification migration',
         failure_reason: 'Corporate proxies caused unstable connections'
       },
@@ -193,13 +193,13 @@ test('9. POST /api/analyze - With Person 1 integration connected', async () => {
   });
   assert.equal(res.status, 200);
   assert.equal(res.body.success, true);
-  assert.equal(res.body.data.recalledMemory.id, 'dec_1');
+  assert.equal(res.body.data.recalledMemory.id, 'demo-websocket-notifications');
   assert.ok(res.body.data.explanation);
 });
 
 test('10. POST /api/reassess - With Person 1 integration connected', async () => {
   const res = await request('POST', '/api/reassess', {
-    decisionId: 'dec_1',
+    decisionId: 'demo-websocket-notifications',
     changedCircumstances: 'Enterprise customers now use proxy bypass network infrastructure'
   });
   assert.equal(res.status, 200);
@@ -209,7 +209,7 @@ test('10. POST /api/reassess - With Person 1 integration connected', async () =>
 
 test('11. POST /api/reassess - Missing changedCircumstances field (400 Bad Request)', async () => {
   const res = await request('POST', '/api/reassess', {
-    decisionId: 'dec_1'
+    decisionId: 'demo-websocket-notifications'
   });
   assert.equal(res.status, 400);
   assert.equal(res.body.error.code, 'VALIDATION_ERROR');

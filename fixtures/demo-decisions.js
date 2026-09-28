@@ -2,6 +2,7 @@
 export const demoDecisions = [
   {
     id: 'demo-websocket-notifications',
+    date: '2026-04-12',
     title: 'WebSocket notification migration',
     problem: 'Reduce polling overhead for notifications',
     approach: 'Replace polling with WebSockets',
@@ -15,6 +16,7 @@ export const demoDecisions = [
   },
   {
     id: 'demo-postgres-index',
+    date: '2026-05-08',
     title: 'Partial index for active orders',
     problem: 'Speed up queries for active orders without indexing archived rows',
     approach: 'Add a partial PostgreSQL index on active orders',
@@ -28,6 +30,7 @@ export const demoDecisions = [
   },
   {
     id: 'demo-redis-cache',
+    date: '2026-06-19',
     title: 'Redis cache for account permissions',
     problem: 'Reduce repeated database reads for account permissions',
     approach: 'Cache account permissions in Redis for ten minutes',

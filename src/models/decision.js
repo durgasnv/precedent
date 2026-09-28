@@ -17,29 +17,14 @@
  * - createdAt: ISO string
  */
 
-let idCounter = 2;
+import { demoDecisions } from '../../fixtures/demo-decisions.js';
 
-const seedDecisions = [
-  {
-    id: "dec_1",
-    title: "WebSocket notification migration",
-    problem: "Reduce polling overhead",
-    approach: "Replace polling with WebSockets",
-    outcome: "Failed for enterprise customers",
-    failure_reason: "Corporate proxies caused unstable connections",
-    alternatives: ["Server-Sent Events"],
-    decision: "Remain on SSE",
-    assumptions: [
-      "Enterprise customers continue to use restrictive corporate proxies"
-    ],
-    reconsider_when: [
-      "Network/proxy constraints materially change"
-    ],
-    evidence: ["incident/decision reference"],
-    date: "2026-04",
-    createdAt: "2026-04-15T10:00:00.000Z"
-  }
-];
+let idCounter = 1;
+
+const seedDecisions = demoDecisions.map(record => ({
+  ...record,
+  createdAt: `${record.date}T00:00:00.000Z`,
+}));
 
 class DecisionModel {
   constructor() {

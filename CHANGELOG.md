@@ -2,6 +2,22 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Share demo decisions across memory, API, and frontend
+
+### Change
+
+- Replaced the backend's independent one-record seed with the three Person 1 fixture decisions.
+- Moved fixture dates into the shared source so Hindsight retention, the API, and frontend display use the same dates and IDs.
+- Updated API tests to check the shared records and the expanded initial list.
+
+### How the feature works
+
+The backend initializes its in-memory decision list from `fixtures/demo-decisions.js`. The Hindsight seed script retains those same IDs as `decision:<id>` documents, and the frontend uses the same records for demo presentation. Once `npm run memory:seed` has run against the configured bank, a recalled `decision_id` can be resolved by the live decision-detail route. Newly created decisions still receive backend-generated IDs.
+
+### Process
+
+Compared Person 2's seed ID with the Hindsight and frontend fixture IDs, made the shared fixture authoritative, updated the dependent tests, and checked the API and frontend builds.
+
 ## 2026-09-28 — Align the frontend with the merged Express API
 
 ### Change

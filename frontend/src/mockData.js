@@ -4,19 +4,16 @@ import { demoDecisions } from '../../fixtures/demo-decisions'
 
 const presentation = {
   'demo-websocket-notifications': {
-    date: '2026-04-12',
     team: 'Platform',
     tags: ['websocket', 'websockets', 'notifications', 'polling', 'sse', 'proxy'],
     relevanceNote: 'The earlier notification migration tested the same connection approach and hit a proxy constraint.',
   },
   'demo-postgres-index': {
-    date: '2026-05-08',
     team: 'Data',
     tags: ['postgres', 'postgresql', 'index', 'orders', 'database', 'query'],
     relevanceNote: 'The team already measured a partial index for the active-order query.',
   },
   'demo-redis-cache': {
-    date: '2026-06-19',
     team: 'Security',
     tags: ['redis', 'cache', 'permissions', 'revocation', 'invalidation'],
     relevanceNote: 'A ten-minute permissions cache was tried and delayed revocations.',
