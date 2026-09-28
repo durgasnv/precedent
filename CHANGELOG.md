@@ -32,3 +32,18 @@ Read all project documents, searched for application-name references, updated th
 ### Process
 
 Applied `git revert -m 1` to the merge in an isolated worktree and checked the resulting file changes. This creates a new commit while retaining the merge in Git history.
+
+## 2026-09-28 — Revert the frontend merge
+
+### Change
+
+- Reverted merge `b3ed205` from `main`, removing the initial React and Vite frontend and its assets and package files.
+- The frontend feature branch remains available for later work.
+
+### Feature behavior
+
+`main` now has no runnable frontend. The planned proposal inbox, memory matches, decision records, timeline, and assumption check remain described in the project documents.
+
+### Process
+
+Applied `git revert -m 1` to the frontend merge after reverting the newer memory merge. Checked that the frontend files were removed and the planning documents remained.
