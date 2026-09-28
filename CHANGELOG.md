@@ -2,6 +2,22 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module and a React frontend. The backend API is still a separate team task.
 
+## 2026-09-28 — Load authoritative records for live history views
+
+### Change
+
+- Made live memory cards load selected decision details through the planned decision-detail route.
+- Made live assumption checks list all stored decisions, including newly recorded ones.
+- Removed local fixture details from live match cards and added loading and error views for record detail.
+
+### How the feature works
+
+The Person 1 analysis result supplies the decision ID and recalled facts. The frontend uses that ID to fetch the full historical record through `GET /api/decisions/:id`, since Hindsight facts are not guaranteed to contain the entire original decision. Assumption Check fetches `GET /api/decisions` before presenting its selector. In demo mode, the shared fixtures remain the source of displayed records.
+
+### Process
+
+Followed the memory module's documented distinction between recalled facts and authoritative records, then updated the two match views and reassessment selector to use the planned backend routes. Verified lint and the production build.
+
 ## 2026-09-28 — Add the decision-recording frontend
 
 ### Change

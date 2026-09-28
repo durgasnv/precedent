@@ -1,18 +1,35 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AssumptionCheck from '../components/AssumptionCheck'
-import { reassessDecision } from '../api'
+import { listDecisions, reassessDecision } from '../api'
 import { decisions, assumptionChecks } from '../mockData'
 
 export default function AssumptionCheckPage({ liveMode }) {
-  const [id, setId] = useState(decisions[0].id)
+  const [available, setAvailable] = useState(liveMode ? [] : decisions)
+  const [id, setId] = useState(liveMode ? '' : decisions[0].id)
   const [info, setInfo] = useState(liveMode ? '' : assumptionChecks[decisions[0].id].newCircumstance)
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const decision = decisions.find((item) => item.id === id)
+  const [loading, setLoading] = useState(liveMode)
+  const decision = available.find((item) => item.id === id)
+
+  useEffect(() => {
+    if (!liveMode) return
+    let active = true
+    listDecisions().then((response) => {
+      const items = Array.isArray(response) ? response : response?.decisions
+      if (!Array.isArray(items)) throw new Error('The backend returned an invalid decision list.')
+      if (active) {
+        setAvailable(items)
+        setId(items[0]?.id || '')
+      }
+    }).catch((cause) => { if (active) setError(cause.message || 'Decisions could not be loaded.') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [liveMode])
 
   const run = async () => {
-    if (!info.trim() || busy) return
+    if (!id || !info.trim() || busy) return
     setError('')
     setResult(null)
     if (!liveMode) {
@@ -35,7 +52,9 @@ export default function AssumptionCheckPage({ liveMode }) {
 
   return (
     <div className="stack">
-      <section className="card proposal">
+      {loading && <section className="card" role="status">Loading decisions…</section>}
+      {!loading && available.length === 0 && !error && <section className="card">No decisions are available to reassess. Record one first.</section>}
+      {decision && <section className="card proposal">
         <label htmlFor="decision-select">Decision to reassess</label>
         <select id="decision-select" value={id} disabled={busy} onChange={(event) => {
           const next = event.target.value
@@ -44,9 +63,9 @@ export default function AssumptionCheckPage({ liveMode }) {
           setResult(null)
           setError('')
         }}>
-          {decisions.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+          {available.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
         </select>
-        <div className="original-assumptions"><strong>Original assumptions</strong><ul>{decision.assumptions.map((item) => <li key={item}>{item}</li>)}</ul></div>
+        <div className="original-assumptions"><strong>Original assumptions</strong><ul>{(decision.assumptions || []).map((item) => <li key={item}>{item}</li>)}</ul></div>
         <label htmlFor="new-info">What has changed since then?</label>
         <textarea
           id="new-info"
@@ -60,7 +79,7 @@ export default function AssumptionCheckPage({ liveMode }) {
           <span className="hint">{liveMode ? 'Your new information is compared with the historical record.' : 'Prepared example. Connect the backend to enter your own circumstances.'}</span>
           <button className="btn btn-primary" onClick={run} disabled={busy || !info.trim()}>{busy ? 'Reassessing' : liveMode ? 'Reassess decision' : 'Show example reassessment'}</button>
         </div>
-      </section>
+      </section>}
       {busy && <section className="card" role="status">Comparing the new circumstances with the original assumptions…</section>}
       {error && <section className="card error-state" role="alert"><h2>Reassessment could not finish</h2><p>{error}</p><button className="btn" onClick={run}>Try again</button></section>}
       <AssumptionCheck check={result} />

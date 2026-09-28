@@ -30,4 +30,5 @@ export const analyzeProposal = (proposal) => request('/api/analyze', { proposal 
 export const reassessDecision = (decision_id, changed_circumstances) =>
   request('/api/reassess', { decision_id, changed_circumstances })
 export const listDecisions = () => request('/api/decisions', undefined, 'GET')
+export const fetchDecision = (id) => request(`/api/decisions/${encodeURIComponent(id)}`, undefined, 'GET')
 export const createDecision = (decision) => request('/api/decisions', decision)

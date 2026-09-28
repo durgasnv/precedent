@@ -20,16 +20,16 @@ export default function DecisionCard({ decision: d, demo = true }) {
     <article className="record decision-card">
       <div className="record-stamp">{demo ? 'Demo decision record' : 'Historical decision record'}{d.date ? `, ${d.date}` : ''}</div>
       <h2>{d.title}</h2>
-      <p className="meta">{d.team} team</p>
+      {d.team && <p className="meta">{d.team} team</p>}
       <div className="decision-grid">
         <Field label="Problem"><p>{d.problem}</p></Field>
         <Field label="Approach tried"><p>{d.approach}</p></Field>
         <Field label="Outcome"><p>{d.outcome}</p></Field>
-        <Field label="Reason or blocker" tone="danger"><p>{d.failureReason}</p></Field>
-        <Field label="Alternatives considered"><List items={d.alternatives} /></Field>
+        <Field label="Reason or blocker" tone="danger"><p>{d.failureReason || d.failure_reason || 'No failure recorded; the experiment succeeded.'}</p></Field>
+        <Field label="Alternatives considered"><List items={d.alternatives || []} /></Field>
         <Field label="Decision made"><p>{d.decision}</p></Field>
-        <Field label="Assumptions"><List items={d.assumptions} /></Field>
-        <Field label="Reconsider when"><List items={d.reconsiderWhen} /></Field>
+        <Field label="Assumptions"><List items={d.assumptions || []} /></Field>
+        <Field label="Reconsider when"><List items={d.reconsiderWhen || d.reconsider_when || []} /></Field>
       </div>
     </article>
   )

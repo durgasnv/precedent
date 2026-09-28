@@ -4,6 +4,7 @@ import LoadingState from '../components/LoadingState'
 import EmptyState from '../components/EmptyState'
 import MemoryCard from '../components/MemoryCard'
 import DecisionCard from '../components/DecisionCard'
+import LiveDecisionCard from '../components/LiveDecisionCard'
 import { getDecision } from '../mockData'
 
 export default function Inbox({ proposal, setProposal, status, matches, analysis, noMatchReason, error, analyze, liveMode }) {
@@ -38,13 +39,13 @@ export default function Inbox({ proposal, setProposal, status, matches, analysis
               <MemoryCard
                 key={m.decisionId}
                 match={m}
-                decision={getDecision(m.decisionId)}
+                decision={liveMode ? null : getDecision(m.decisionId)}
                 active={m.decisionId === selectedId}
                 onOpen={setSelected}
               />
             ))}
           </div>
-          {decision && <DecisionCard decision={decision} demo={!liveMode} />}
+          {liveMode ? <LiveDecisionCard key={selectedId} id={selectedId} /> : decision && <DecisionCard decision={decision} />}
           {liveMode && selectedMatch?.facts?.length > 0 && (
             <section className="card evidence"><h2>Recalled evidence</h2><ul>{selectedMatch.facts.map((fact) => <li key={fact.id}><p>{fact.text}</p><small>Fact {fact.id}{fact.document_id ? ` · ${fact.document_id}` : ''}</small></li>)}</ul></section>
           )}

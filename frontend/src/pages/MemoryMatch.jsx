@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import MemoryCard from '../components/MemoryCard'
 import DecisionCard from '../components/DecisionCard'
+import LiveDecisionCard from '../components/LiveDecisionCard'
 import EmptyState from '../components/EmptyState'
 import { getDecision } from '../mockData'
 
@@ -28,13 +29,13 @@ export default function MemoryMatch({ matches, status, noMatchReason, error, ana
           <MemoryCard
             key={m.decisionId}
             match={m}
-            decision={getDecision(m.decisionId)}
+            decision={liveMode ? null : getDecision(m.decisionId)}
             active={selectedId === m.decisionId}
             onOpen={setOpen}
           />
         ))}
       </div>
-      {decision && <DecisionCard decision={decision} demo={!liveMode} />}
+      {liveMode ? <LiveDecisionCard key={selectedId} id={selectedId} /> : decision && <DecisionCard decision={decision} />}
       {liveMode && selectedMatch?.facts?.length > 0 && <section className="card evidence"><h2>Recalled evidence</h2><ul>{selectedMatch.facts.map((fact) => <li key={fact.id}><p>{fact.text}</p><small>Fact {fact.id}{fact.document_id ? ` · ${fact.document_id}` : ''}</small></li>)}</ul></section>}
       {liveMode && analysis?.summary && <section className="ai-panel"><div className="ai-stamp">Current analysis</div><p>{analysis.summary}</p></section>}
     </div>
