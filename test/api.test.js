@@ -235,3 +235,27 @@ test('13. Unknown route (404 Not Found)', async () => {
   assert.equal(res.status, 404);
   assert.equal(res.body.error.code, 'NOT_FOUND');
 });
+
+test('collection API starts empty and rejects cross-collection record access', async () => {
+  const created = await request('POST', '/api/collections', { name: 'New infrastructure example' });
+  assert.equal(created.status, 201);
+  const headers = { 'X-Precedent-Collection': created.body.data.id };
+  const empty = await request('GET', '/api/decisions', null, headers);
+  assert.deepEqual(empty.body.data, []);
+  const hidden = await request('GET', '/api/decisions/demo-websocket-notifications', null, headers);
+  assert.equal(hidden.status, 404);
+  const reassess = await request('POST', '/api/reassess', {
+    decisionId: 'demo-websocket-notifications', changedCircumstances: 'A different network',
+  }, headers);
+  assert.equal(reassess.status, 404);
+  const invalid = await request('GET', '/api/decisions', null, { 'X-Precedent-Collection': 'missing' });
+  assert.equal(invalid.status, 404);
+  const saved = await request('POST', '/api/decisions', {
+    title: 'New example', problem: 'A problem', approach: 'An approach', outcome: 'An outcome', decision: 'A decision',
+  }, headers);
+  assert.equal(saved.status, 201);
+  const outside = await request('GET', `/api/decisions/${saved.body.data.id}`);
+  assert.equal(outside.status, 404);
+  const inside = await request('GET', `/api/decisions/${saved.body.data.id}`, null, headers);
+  assert.equal(inside.status, 200);
+});

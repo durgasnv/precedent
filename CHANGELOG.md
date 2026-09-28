@@ -2,6 +2,10 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Isolate decision collections and Hindsight banks
+
+Added collection list/create routes and collection-scoped decision reads, writes, analysis, and reassessment. `X-Precedent-Collection` defaults to the existing demo collection and is checked before memory calls. Custom collections use separate Hindsight banks; the demo keeps the existing bank. Version 1 saved records migrate into the demo collection without ID changes. Tests cover empty collections, cross-collection detail/reassessment rejection, persistence, migration, and the bank used for every memory operation. Collections organize examples and do not provide user authentication.
+
 ## 2026-09-28 — Persist decision records and use stable UUIDs
 
 Replaced the process-only list with atomic JSON snapshots at `DECISION_STORE_PATH` (default `data/decisions.json`, ignored by Git). New decisions use UUIDs and become visible after successful Hindsight retention and a local save. Reads return copies, and malformed stored data stops startup instead of being erased. The backend uses one process and a persistent disk; Hindsight retention and file writes are not a distributed transaction. Added restart, identity, uncommitted-draft, and corrupt-file checks, and isolated API tests in temporary storage.

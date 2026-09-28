@@ -7,7 +7,7 @@ PRECEDENT must work with user-supplied technical decisions, not depend on the th
 | Stage | Feature | Acceptance criteria | Status |
 | --- | --- | --- | --- |
 | 1 | Persistent records and stable IDs | Records survive restart; new IDs never reuse old Hindsight document IDs; malformed storage is reported instead of silently erased. | Implemented; covered by store/API tests |
-| 2 | Separate decision collections | Users can create an empty collection, switch collections, and record arbitrary examples; API records and Hindsight recall/reflection are scoped to the selected collection. | Planned |
+| 2 | Separate decision collections | Users can create an empty collection, switch collections, and record arbitrary examples; API records and Hindsight recall/reflection are scoped to the selected collection. | API and bank isolation implemented; browser selector in progress |
 | 3 | Flexible context | Optional project, team, technologies, constraints, and measurements are retained with the decision and displayed in the UI. | Planned |
 | 4 | Real decision history | Recording and reassessment create dated events; the live timeline shows those events for the selected collection and preserves the original record. | Planned |
 | 5 | Reviewed document import | Paste notes or upload Markdown/text; extract a draft with supporting passages; user reviews and saves it explicitly. Unstated facts remain unknown. | Planned |

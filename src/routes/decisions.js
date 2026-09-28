@@ -14,7 +14,7 @@ import { validateRecordDecision } from '../middleware/validation.js';
 // GET /api/decisions - List all decision records
 router.get('/decisions', async (req, res, next) => {
   try {
-    const decisions = await orchestrator.listDecisions();
+    const decisions = await orchestrator.listDecisions(req.collectionId);
     res.status(200).json({
       success: true,
       count: decisions.length,
@@ -29,7 +29,7 @@ router.get('/decisions', async (req, res, next) => {
 router.get('/decisions/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const decision = await orchestrator.getDecisionById(id);
+    const decision = await orchestrator.getDecisionById(id, req.collectionId);
 
     if (!decision) {
       return res.status(404).json({
@@ -52,7 +52,7 @@ router.get('/decisions/:id', async (req, res, next) => {
 // POST /api/decisions - Record a technical decision
 router.post('/decisions', validateRecordDecision, async (req, res, next) => {
   try {
-    const result = await orchestrator.recordDecision(req.body);
+    const result = await orchestrator.recordDecision(req.body, req.collectionId);
     res.status(201).json({
       success: true,
       data: result.decision,

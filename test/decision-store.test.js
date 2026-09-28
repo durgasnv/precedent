@@ -38,3 +38,25 @@ test('invalid storage fails without overwriting the file', () => {
   assert.throws(() => new DecisionModel({ filePath }));
   assert.equal(readFileSync(filePath, 'utf8'), '{broken');
 });
+
+test('collections start empty, isolate records, and survive restart', () => {
+  const filePath = join(directory, 'collections.json');
+  const store = new DecisionModel({ filePath });
+  const collection = store.createCollection('Database migration');
+  assert.deepEqual(store.getAll(collection.id), []);
+  assert.equal(store.getById(demoDecisions[0].id, collection.id), null);
+  const record = store.create(demoDecisions[1], collection.id);
+  assert.equal(store.getById(record.id), null);
+  const restarted = new DecisionModel({ filePath });
+  assert.deepEqual(restarted.getCollection(collection.id), collection);
+  assert.deepEqual(restarted.getAll(collection.id), [record]);
+});
+
+test('version 1 records migrate into the demo collection without changing IDs', () => {
+  const filePath = join(directory, 'migration.json');
+  writeFileSync(filePath, JSON.stringify({ version: 1, decisions: [demoDecisions[0]] }));
+  const store = new DecisionModel({ filePath });
+  assert.equal(store.getAll()[0].id, demoDecisions[0].id);
+  assert.equal(store.getAll()[0].collection_id, 'demo');
+  assert.equal(JSON.parse(readFileSync(filePath, 'utf8')).version, 2);
+});

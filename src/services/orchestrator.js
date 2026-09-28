@@ -12,24 +12,24 @@ class OrchestratorService {
   /**
    * List all stored technical decision records.
    */
-  async listDecisions() {
-    return decisionModel.getAll();
+  async listDecisions(collectionId) {
+    return decisionModel.getAll(collectionId);
   }
 
   /**
    * Get a single decision record by ID.
    */
-  async getDecisionById(id) {
-    return decisionModel.getById(id);
+  async getDecisionById(id, collectionId) {
+    return decisionModel.getById(id, collectionId);
   }
 
   /**
    * Record a new technical decision.
    * Flow: validate/assign ID -> Person 1 retain -> persist record -> response
    */
-  async recordDecision(data) {
-    const createdDecision = decisionModel.prepare(data);
-    const retentionResult = await aiMemoryService.retainDecision(createdDecision);
+  async recordDecision(data, collectionId) {
+    const createdDecision = decisionModel.prepare(data, collectionId);
+    const retentionResult = await aiMemoryService.retainDecision(createdDecision, collectionId);
     decisionModel.insert(createdDecision);
 
     return {
@@ -46,6 +46,7 @@ class OrchestratorService {
     // Delegates to Person 1's AI & Memory service boundary
     const analysisResult = await aiMemoryService.analyzeProposal({
       proposal: payload.proposal,
+      collectionId: payload.collectionId,
       context: payload.context || null
     });
 
@@ -59,7 +60,7 @@ class OrchestratorService {
   async reassessDecision(payload) {
     let targetDecision = null;
     if (payload.decisionId) {
-      targetDecision = decisionModel.getById(payload.decisionId);
+      targetDecision = decisionModel.getById(payload.decisionId, payload.collectionId);
     }
 
     if (!targetDecision) {
@@ -73,6 +74,7 @@ class OrchestratorService {
     const reassessmentResult = await aiMemoryService.reassessAssumptions({
       decisionId: payload.decisionId || null,
       decisionRecord: targetDecision,
+      collectionId: payload.collectionId,
       proposal: payload.proposal || null,
       changedCircumstances: payload.changedCircumstances
     });
