@@ -2,6 +2,21 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module and a React frontend. The backend API is still a separate team task.
 
+## 2026-09-28 — Merge the Person 2 Express backend
+
+### Change
+
+- Brought the Person 2 routes, validation, in-memory decision model, service boundary, error handling, and API tests into the Person 1 branch.
+- Combined the Express and Hindsight dependencies and environment examples, then converted the imported backend files to ES modules so they run under the existing project package configuration.
+
+### How the feature works
+
+The Express app exposes health, decision, analysis, and reassessment routes. At this merge stage, the decision model keeps records in process memory and the Person 1 service boundary is still a placeholder. The following integration change will connect it to the Hindsight module and align the API response shape with the frontend.
+
+### Process
+
+Fetched `origin/person-2` after updating `main`, merged it into the Person 1 branch, resolved four add/add configuration conflicts, regenerated the lockfile, and ran both API and memory tests with local loopback access.
+
 ## 2026-09-28 — Load authoritative records for live history views
 
 ### Change
