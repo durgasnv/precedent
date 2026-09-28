@@ -1,9 +1,9 @@
-export default function Sidebar({ pages, current, onNavigate, memoryCount }) {
+export default function Sidebar({ pages, current, onNavigate, memoryCount, liveMode }) {
   return (
     <aside className="sidebar">
       <div className="brand">
         <span className="brand-mark" aria-hidden="true" />
-        <span className="brand-name">Precedent</span>
+        <span className="brand-name">PRECEDENT</span>
       </div>
       <nav className="nav" aria-label="Main">
         {Object.entries(pages).map(([key, p]) => (
@@ -20,8 +20,8 @@ export default function Sidebar({ pages, current, onNavigate, memoryCount }) {
       <div className="memory-status">
         <span className="pulse" aria-hidden="true" />
         <div>
-          <strong>Memory connected</strong>
-          <span>{memoryCount} demo decisions</span>
+          <strong>{liveMode ? 'Live mode' : 'Demo mode'}</strong>
+          <span>{liveMode ? 'Backend analysis enabled' : `${memoryCount} example decisions`}</span>
         </div>
       </div>
     </aside>

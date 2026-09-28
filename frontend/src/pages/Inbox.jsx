@@ -4,16 +4,16 @@ import LoadingState from '../components/LoadingState'
 import EmptyState from '../components/EmptyState'
 import MemoryCard from '../components/MemoryCard'
 import DecisionCard from '../components/DecisionCard'
-import AssumptionCheck from '../components/AssumptionCheck'
-import { getDecision, assumptionChecks } from '../mockData'
+import { getDecision } from '../mockData'
 
-export default function Inbox({ proposal, setProposal, status, matches, analyze }) {
+export default function Inbox({ proposal, setProposal, status, matches, analysis, noMatchReason, error, analyze, liveMode }) {
   const [selected, setSelected] = useState(null)
 
   const selectedId = matches.some((match) => match.decisionId === selected)
     ? selected
     : matches[0]?.decisionId ?? null
   const decision = selectedId ? getDecision(selectedId) : null
+  const selectedMatch = matches.find((match) => match.decisionId === selectedId)
 
   return (
     <div className="stack">
@@ -21,16 +21,18 @@ export default function Inbox({ proposal, setProposal, status, matches, analyze 
 
       {status === 'loading' && <LoadingState />}
 
+      {status === 'error' && <section className="card error-state" role="alert"><h2>Analysis could not finish</h2><p>{error}</p><button className="btn" onClick={analyze}>Try again</button></section>}
+
       {status === 'done' && matches.length === 0 && (
         <EmptyState
           title="No related history found"
-          body="No demo record matched this proposal. Try naming the technology or the problem it solves."
+          body={noMatchReason || 'No related history was confirmed for this proposal.'}
         />
       )}
 
-      {status === 'done' && decision && (
+      {status === 'done' && matches.length > 0 && (
         <>
-          <h2 className="section-title">Demo decision history</h2>
+          <h2 className="section-title">{liveMode ? 'Historical memory' : 'Demo decision history'}</h2>
           <div className="memory-list">
             {matches.map((m) => (
               <MemoryCard
@@ -42,9 +44,11 @@ export default function Inbox({ proposal, setProposal, status, matches, analyze 
               />
             ))}
           </div>
-          <DecisionCard decision={decision} />
-          <h2 className="section-title">Reassessment</h2>
-          <AssumptionCheck check={assumptionChecks[decision.id]} />
+          {decision && <DecisionCard decision={decision} />}
+          {liveMode && selectedMatch?.facts?.length > 0 && (
+            <section className="card evidence"><h2>Recalled evidence</h2><ul>{selectedMatch.facts.map((fact) => <li key={fact.id}><p>{fact.text}</p><small>Fact {fact.id}{fact.document_id ? ` · ${fact.document_id}` : ''}</small></li>)}</ul></section>
+          )}
+          {liveMode && analysis?.summary && <section className="ai-panel"><div className="ai-stamp">Current analysis</div><p>{analysis.summary}</p></section>}
         </>
       )}
     </div>

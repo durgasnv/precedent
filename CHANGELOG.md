@@ -1,6 +1,22 @@
 # PRECEDENT Change Log
 
-This document records each project change, the affected workflow, and the process used. The repository currently contains planning documents; the application has not been implemented yet.
+This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module and a React frontend. The backend API is still a separate team task.
+
+## 2026-09-28 — Prepare live proposal analysis in the frontend
+
+### Change
+
+- Added an opt-in frontend API client for proposal analysis and converted returned decision groups into memory cards.
+- Displayed recalled fact text and IDs separately from current analysis, with explicit no-match and request-error states.
+- Kept local keyword matching as a clearly labeled demo when no backend URL is configured.
+
+### How the feature works
+
+With `VITE_API_BASE_URL`, the inbox sends a proposal to `POST /api/analyze` and renders `decision_matches` from the Person 1 module. The selected group shows its recalled source facts, while the generated summary appears in a separate analysis panel. Without that URL, the frontend uses the shared seed records and labels the results as demo matches. The Hindsight credential stays on the backend.
+
+### Process
+
+Compared the Person 1 return shape with the frontend component props, added a small API adapter, and kept a demo fallback so the frontend remains inspectable while Person 2 builds the routes. Checked the frontend build and lint after the change.
 
 ## 2026-09-27 — Establish the PRECEDENT application name
 

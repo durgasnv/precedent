@@ -7,6 +7,7 @@ import DecisionRecords from './pages/DecisionRecords'
 import AssumptionCheckPage from './pages/AssumptionCheckPage'
 import Timeline from './pages/Timeline'
 import { decisions, findMatches } from './mockData'
+import { analyzeProposal, liveMode } from './api'
 
 const PAGES = {
   inbox: { label: 'Decision Inbox', subtitle: 'Propose a change and see what the team already learned.' },
@@ -19,36 +20,59 @@ const PAGES = {
 export default function App() {
   const [page, setPage] = useState('inbox')
   const [proposal, setProposal] = useState('')
-  const [status, setStatus] = useState('idle') // idle | loading | done
+  const [status, setStatus] = useState('idle') // idle | loading | done | error
   const [matches, setMatches] = useState([])
+  const [analysis, setAnalysis] = useState(null)
+  const [noMatchReason, setNoMatchReason] = useState('')
+  const [error, setError] = useState('')
 
-  const analyze = () => {
+  const analyze = async () => {
     if (!proposal.trim() || status === 'loading') return
     setStatus('loading')
-    // TODO(backend): replace local matching with an API call; keep the Hindsight key server-side.
-    setTimeout(() => {
-      setMatches(findMatches(proposal))
+    setError('')
+    setAnalysis(null)
+    setMatches([])
+    try {
+      if (liveMode) {
+        const result = await analyzeProposal(proposal.trim())
+        if (!Array.isArray(result?.decision_matches)) throw new Error('The backend returned an invalid analysis.')
+        setMatches(result.decision_matches.map((group) => ({
+          decisionId: group.decision_id,
+          title: group.title,
+          why: group.matches?.map((match) => match.why_relevant).filter(Boolean).join(' ') || 'Related historical evidence was recalled.',
+          facts: group.facts || [],
+        })))
+        setAnalysis(result.analysis)
+        setNoMatchReason(result.no_match_reason || '')
+      } else {
+        const localMatches = findMatches(proposal)
+        setMatches(localMatches)
+        setNoMatchReason(localMatches.length ? '' : 'No demo record matched this proposal.')
+      }
       setStatus('done')
-    }, 2800)
+    } catch (cause) {
+      setError(cause.message || 'Analysis failed. Please try again.')
+      setStatus('error')
+    }
   }
 
-  const shared = { proposal, setProposal, status, matches, analyze, onNavigate: setPage }
+  const shared = { proposal, setProposal, status, matches, analysis, noMatchReason, error, analyze, onNavigate: setPage, liveMode }
 
   return (
     <div className="app">
-      <Sidebar pages={PAGES} current={page} onNavigate={setPage} memoryCount={decisions.length} />
+      <Sidebar pages={PAGES} current={page} onNavigate={setPage} memoryCount={decisions.length} liveMode={liveMode} />
       <main className="main">
         <Header
           title={PAGES[page].label}
           subtitle={PAGES[page].subtitle}
-          status={status === 'loading' ? 'Searching demo records' : `${decisions.length} demo records`}
+          status={status === 'loading' ? 'Searching history' : liveMode ? 'Live analysis' : `${decisions.length} demo records`}
           busy={status === 'loading'}
         />
         <div className="content">
           {page === 'inbox' && <Inbox {...shared} />}
           {page === 'memory' && <MemoryMatch {...shared} />}
           {page === 'records' && <DecisionRecords />}
-          {page === 'assumptions' && <AssumptionCheckPage />}
+          {page === 'assumptions' && <AssumptionCheckPage liveMode={liveMode} />}
           {page === 'timeline' && <Timeline />}
         </div>
       </main>
