@@ -10,6 +10,7 @@ import decisionsRoutes from './decisions.js';
 import analyzeRoutes from './analyze.js';
 import reassessRoutes from './reassess.js';
 import collectionRoutes from './collections.js';
+import timelineRoutes from './timeline.js';
 import decisionModel from '../models/decision.js';
 
 router.use(healthRoutes);
@@ -22,6 +23,7 @@ router.use((req, res, next) => {
   next();
 });
 router.use(decisionsRoutes);
+router.use(timelineRoutes);
 router.use(analyzeRoutes);
 router.use(reassessRoutes);
 

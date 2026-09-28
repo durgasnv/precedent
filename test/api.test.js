@@ -212,6 +212,8 @@ test('10. POST /api/reassess - With Person 1 integration connected', async () =>
   assert.equal(res.status, 200);
   assert.equal(res.body.success, true);
   assert.equal(res.body.data.status, 'potentially changed');
+  const timeline = await request('GET', '/api/timeline');
+  assert.ok(timeline.body.data.some(event => event.kind === 'reassessed' && event.decision_id === 'demo-websocket-notifications'));
 });
 
 test('11. POST /api/reassess - Missing changedCircumstances field (400 Bad Request)', async () => {
@@ -242,6 +244,8 @@ test('collection API starts empty and rejects cross-collection record access', a
   const headers = { 'X-Precedent-Collection': created.body.data.id };
   const empty = await request('GET', '/api/decisions', null, headers);
   assert.deepEqual(empty.body.data, []);
+  const emptyTimeline = await request('GET', '/api/timeline', null, headers);
+  assert.deepEqual(emptyTimeline.body.data, []);
   const hidden = await request('GET', '/api/decisions/demo-websocket-notifications', null, headers);
   assert.equal(hidden.status, 404);
   const reassess = await request('POST', '/api/reassess', {
@@ -258,4 +262,6 @@ test('collection API starts empty and rejects cross-collection record access', a
   assert.equal(outside.status, 404);
   const inside = await request('GET', `/api/decisions/${saved.body.data.id}`, null, headers);
   assert.equal(inside.status, 200);
+  const timeline = await request('GET', '/api/timeline', null, headers);
+  assert.deepEqual(timeline.body.data.map(event => event.kind), ['recorded']);
 });

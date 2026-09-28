@@ -58,5 +58,21 @@ test('version 1 records migrate into the demo collection without changing IDs', 
   const store = new DecisionModel({ filePath });
   assert.equal(store.getAll()[0].id, demoDecisions[0].id);
   assert.equal(store.getAll()[0].collection_id, 'demo');
-  assert.equal(JSON.parse(readFileSync(filePath, 'utf8')).version, 2);
+  assert.equal(JSON.parse(readFileSync(filePath, 'utf8')).version, 3);
+});
+
+test('recording and reassessment history survives restart in its collection', () => {
+  const filePath = join(directory, 'history.json');
+  const first = new DecisionModel({ filePath, seeds: [] });
+  const collection = first.createCollection('Notifications');
+  const record = first.create(demoDecisions[0], collection.id);
+  first.addReassessment(record.id, collection.id, 'Proxy policy changed', {
+    status: 'may_have_changed', reason: 'The old blocker may be gone',
+    challenged_assumptions: ['Corporate proxy remains'], evidence_gaps: ['Connection test'],
+  });
+  assert.deepEqual(first.getTimeline(), []);
+  const events = new DecisionModel({ filePath, seeds: [] }).getTimeline(collection.id);
+  assert.deepEqual(events.map(event => event.kind), ['recorded', 'reassessed']);
+  assert.equal(events[1].assessment.status, 'may_have_changed');
+  assert.equal(events[1].changed_circumstances, 'Proxy policy changed');
 });

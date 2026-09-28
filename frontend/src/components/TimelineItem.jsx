@@ -6,6 +6,7 @@ export default function TimelineItem({ event, onOpen }) {
         <time>{event.date}</time>
         <h3>{event.title}</h3>
         <span className="tl-type">{event.type}</span>
+        {event.description && <p>{event.description}</p>}
         {onOpen && (
           <button className="link" onClick={() => onOpen(event.decisionId)}>View record</button>
         )}

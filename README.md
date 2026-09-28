@@ -20,7 +20,7 @@ From the repository root, run `npm ci` and `npm test`. Configure the ignored `.e
 
 ## Run the live workflow
 
-Configure `.env` at the repository root with the Hindsight instance URL, bank ID, and API key if required. Run `npm ci`, then `npm run memory:seed` to retain the three shared demo records in Hindsight. Start the API with `npm start`; it listens on port 5000 by default. In `frontend`, copy `.env.example` to `.env`, run `npm ci`, and start Vite with `npm run dev`. The frontend then uses the Express routes for decision recording, analysis, and reassessment. The backend's authoritative decision list is currently held in process memory and resets on restart, while Hindsight keeps retained facts.
+Configure `.env` at the repository root with the Hindsight instance URL, bank ID, and API key if required. Run `npm ci`, then `npm run memory:seed` to retain the three shared demo records in Hindsight. Start the API with `npm start`; it listens on port 5000 by default. In `frontend`, copy `.env.example` to `.env`, run `npm ci`, and start Vite with `npm run dev`. The frontend then uses the Express routes for decision recording, analysis, and reassessment. Select Engineering examples or create an empty collection for other technical examples. The backend saves records, collections, and timeline events in `DECISION_STORE_PATH` (default `data/decisions.json`); keep this file on persistent disk and back it up. Each non-demo collection uses a separate Hindsight bank. Run one backend process per storage file.
 
 ## Project documents
 

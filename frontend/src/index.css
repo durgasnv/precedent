@@ -152,6 +152,8 @@ textarea:focus, select:focus, .search:focus { outline: none; border-color: var(-
 .tl-dot { position: absolute; left: -27px; top: 5px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--muted); }
 .tl-failed .tl-dot { border-color: var(--danger); }
 .tl-decided .tl-dot { border-color: var(--ok); }
+.tl-recorded .tl-dot { border-color: var(--ok); }
+.tl-reassessed .tl-dot { border-color: var(--ai); }
 .tl-started .tl-dot { border-color: var(--paper-line); }
 .tl-body { background: var(--paper); border: 1px solid #e4d8b4; border-radius: 8px; padding: 12px 16px; display: grid; gap: 2px; justify-items: start; }
 .tl-body time { font-size: 13px; color: var(--muted); }

@@ -34,3 +34,4 @@ export const fetchDecision = (id, collectionId) => request(`/api/decisions/${enc
 export const createDecision = (decision, collectionId) => request('/api/decisions', decision, 'POST', collectionId)
 export const listCollections = () => request('/api/collections', undefined, 'GET')
 export const createCollection = (name) => request('/api/collections', { name })
+export const listTimeline = (collectionId) => request('/api/timeline', undefined, 'GET', collectionId)

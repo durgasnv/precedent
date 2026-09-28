@@ -2,6 +2,10 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Record a live decision timeline
+
+Stored `recorded` events when a decision is saved and `reassessed` events when an assumption check finishes, with timestamps and collection IDs. Version 2 storage migrates existing records into history. `GET /api/timeline` returns events for the selected collection; the frontend uses it in live mode and keeps its prepared timeline only for the offline demo. The reassessment event stores the generated result separately from the historical decision and is not retained as a new fact. Verified event persistence after restart, collection isolation, API responses, frontend lint, and production build.
+
 ## 2026-09-28 — Retain optional decision context
 
 Added project, team, technologies, constraints, and measurements to the shared record contract. The form exposes them under Additional context; the API stores them, Hindsight receives them in retained text, and the decision card shows supplied values. Empty fields remain optional. Search uses supplied technologies. This lets different engineering examples keep the context that explains differing outcomes. Verified the formatted retained text, API tests, frontend lint, and build.

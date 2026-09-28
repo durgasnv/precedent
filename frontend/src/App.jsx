@@ -81,7 +81,7 @@ function Workspace({ collection, onCollectionChange }) {
           {page === 'memory' && <MemoryMatch {...shared} />}
           {page === 'records' && <DecisionRecords liveMode={liveMode} collectionId={collectionId} />}
           {page === 'assumptions' && <AssumptionCheckPage liveMode={liveMode} collectionId={collectionId} />}
-          {page === 'timeline' && <Timeline />}
+          {page === 'timeline' && <Timeline liveMode={liveMode} collectionId={collectionId} />}
         </div>
       </main>
     </div>

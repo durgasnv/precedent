@@ -23,6 +23,10 @@ class OrchestratorService {
     return decisionModel.getById(id, collectionId);
   }
 
+  async listTimeline(collectionId) {
+    return decisionModel.getTimeline(collectionId);
+  }
+
   /**
    * Record a new technical decision.
    * Flow: validate/assign ID -> Person 1 retain -> persist record -> response
@@ -78,6 +82,8 @@ class OrchestratorService {
       proposal: payload.proposal || null,
       changedCircumstances: payload.changedCircumstances
     });
+
+    decisionModel.addReassessment(payload.decisionId, payload.collectionId, payload.changedCircumstances, reassessmentResult);
 
     return reassessmentResult;
   }
