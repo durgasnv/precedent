@@ -43,6 +43,19 @@ test('retains the full decision with a stable document id and source metadata', 
   assert.equal(result.decision_id, decision.id);
 });
 
+test('optional context survives validation and appears in retained decision text', () => {
+  const context = validateDecision({ ...decision,
+    project: 'Realtime alerts', team: 'Platform',
+    technologies: ['WebSockets'], constraints: ['Corporate proxy'],
+    measurements: ['Connection failure rate: 12%'],
+  });
+  const text = formatDecision(context);
+  assert.match(text, /Project: Realtime alerts/);
+  assert.match(text, /Technologies: WebSockets/);
+  assert.match(text, /Constraints: Corporate proxy/);
+  assert.match(text, /Measurements: Connection failure rate: 12%/);
+});
+
 test('recalls source identifiers and keeps an empty history distinct from an AI answer', async () => {
   let reflected = false;
   const memory = createMemoryAi({

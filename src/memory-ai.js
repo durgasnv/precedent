@@ -67,7 +67,8 @@ const REASSESSMENT_SCHEMA = {
 };
 
 const REQUIRED_DECISION_FIELDS = ['id', 'title', 'problem', 'approach', 'outcome', 'decision'];
-const OPTIONAL_LIST_FIELDS = ['alternatives', 'assumptions', 'reconsider_when', 'evidence'];
+const OPTIONAL_LIST_FIELDS = ['alternatives', 'assumptions', 'reconsider_when', 'evidence', 'technologies', 'constraints', 'measurements'];
+const OPTIONAL_TEXT_FIELDS = ['project', 'team'];
 
 function nonEmptyString(value, label) {
   if (typeof value !== 'string' || !value.trim()) {
@@ -85,6 +86,9 @@ export function validateDecision(input) {
     decision[field] = nonEmptyString(input[field], `decision.${field}`);
   }
   decision.failure_reason = input.failure_reason == null ? '' : String(input.failure_reason).trim();
+  for (const field of OPTIONAL_TEXT_FIELDS) {
+    decision[field] = input[field] == null || input[field] === '' ? '' : nonEmptyString(input[field], `decision.${field}`);
+  }
   for (const field of OPTIONAL_LIST_FIELDS) {
     const value = input[field] ?? [];
     if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || !item.trim())) {
@@ -109,6 +113,11 @@ export function formatDecision(decision) {
     `Reconsider when: ${decision.reconsider_when.join('; ') || 'Not recorded'}`,
     `Evidence or references: ${decision.evidence.join('; ') || 'Not recorded'}`,
   ];
+  if (decision.project) lines.push(`Project: ${decision.project}`);
+  if (decision.team) lines.push(`Team: ${decision.team}`);
+  if (decision.technologies.length) lines.push(`Technologies: ${decision.technologies.join('; ')}`);
+  if (decision.constraints.length) lines.push(`Constraints: ${decision.constraints.join('; ')}`);
+  if (decision.measurements.length) lines.push(`Measurements: ${decision.measurements.join('; ')}`);
   if (decision.date) lines.push(`Decision date: ${decision.date}`);
   return lines.join('\n');
 }

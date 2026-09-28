@@ -2,6 +2,10 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Retain optional decision context
+
+Added project, team, technologies, constraints, and measurements to the shared record contract. The form exposes them under Additional context; the API stores them, Hindsight receives them in retained text, and the decision card shows supplied values. Empty fields remain optional. Search uses supplied technologies. This lets different engineering examples keep the context that explains differing outcomes. Verified the formatted retained text, API tests, frontend lint, and build.
+
 ## 2026-09-28 — Create and switch collections from the frontend
 
 Added a live collection selector and empty-collection creation form. All decision, detail, analysis, and reassessment requests send the selected collection ID. Each collection has its own React workspace instance, so switching clears old proposals, results, and drafts and prevents a late result from populating another collection. The offline demo remains a labeled example collection. Verified frontend lint and production build; browser and live Cloud checks remain separate from those static checks.

@@ -9,8 +9,8 @@ function forDisplay(record) {
   return {
     ...record,
     team: record.team || 'Engineering',
-    tags: record.tags || [],
-    failureReason: record.failure_reason || 'No failure recorded; the experiment succeeded.',
+    tags: record.tags || record.technologies || [],
+    failureReason: record.failure_reason || 'No separate reason recorded.',
     reconsiderWhen: record.reconsider_when || [],
     alternatives: record.alternatives || [],
     assumptions: record.assumptions || [],

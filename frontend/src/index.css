@@ -139,6 +139,8 @@ textarea:focus, select:focus, .search:focus { outline: none; border-color: var(-
 .decision-form > .meta { margin: 4px 0 16px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
 .form-error { color: var(--danger); margin-bottom: 12px; }
+.optional-context { border-top: 1px solid var(--line); margin: 14px 0; padding-top: 12px; }
+.optional-context summary { cursor: pointer; font-weight: 600; margin-bottom: 12px; }
 .collection-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 .collection-picker select { margin-bottom: 4px; }
 .collection-picker form { display: grid; gap: 6px; }

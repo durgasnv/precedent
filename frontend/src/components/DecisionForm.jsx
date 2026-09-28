@@ -3,6 +3,7 @@ import { useState } from 'react'
 const initial = {
   title: '', problem: '', approach: '', outcome: '', failure_reason: '',
   alternatives: '', decision: '', assumptions: '', reconsider_when: '', evidence: '',
+  project: '', team: '', technologies: '', constraints: '', measurements: '',
 }
 const fields = [
   ['title', 'Title'], ['problem', 'Problem or goal'], ['approach', 'Approach tried'],
@@ -11,8 +12,12 @@ const fields = [
   ['assumptions', 'Original assumptions, one per line'],
   ['reconsider_when', 'Reconsider when, one per line'], ['evidence', 'Evidence or references, one per line'],
 ]
+const contextFields = [
+  ['project', 'Project'], ['team', 'Team'], ['technologies', 'Technologies, one per line'],
+  ['constraints', 'Constraints, one per line'], ['measurements', 'Measurements, one per line'],
+]
 const required = new Set(['title', 'problem', 'approach', 'outcome', 'decision'])
-const lists = new Set(['alternatives', 'assumptions', 'reconsider_when', 'evidence'])
+const lists = new Set(['alternatives', 'assumptions', 'reconsider_when', 'evidence', 'technologies', 'constraints', 'measurements'])
 
 export default function DecisionForm({ onSave }) {
   const [values, setValues] = useState(initial)
@@ -47,6 +52,15 @@ export default function DecisionForm({ onSave }) {
           <textarea id={`record-${key}`} rows={key === 'problem' || key === 'outcome' ? 3 : 2} required={required.has(key)} value={values[key]} disabled={busy} onChange={(event) => setValues({ ...values, [key]: event.target.value })} />
         </div>)}
       </div>
+      <details className="optional-context">
+        <summary>Additional context</summary>
+        <div className="form-grid">
+          {contextFields.map(([key, label]) => <div key={key}>
+            <label htmlFor={`record-${key}`}>{label}</label>
+            <textarea id={`record-${key}`} rows={2} value={values[key]} disabled={busy} onChange={(event) => setValues({ ...values, [key]: event.target.value })} />
+          </div>)}
+        </div>
+      </details>
       {error && <p className="form-error" role="alert">{error}</p>}
       <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? 'Saving decision' : 'Save decision'}</button>
     </form>
