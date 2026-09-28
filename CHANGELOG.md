@@ -2,6 +2,10 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Write the Hindsight technical article
+
+Added `article.md` and linked it from the README. The article follows the stored WebSocket proxy decision through Hindsight retention, source-backed recall, structured relevance checks, and changed-assumption reassessment. It uses four small snippets from the current code and links to the requested Hindsight and Vectorize resources. Reviewed the memory module, the WebSocket fixture, and the documented live smoke result, then checked the requested length, links, and wording constraints. It makes no benchmark claim.
+
 ## 2026-09-28 — Draft technical article titles
 
 Added `article-title-ideas.md` with 20 short Hindsight article titles grounded in the repository's decision records, memory boundaries, and assumption reassessment flow. Read the current code and chose the failed WebSocket migration as the article's central case because it connects a stored outcome to a later change in network constraints.
