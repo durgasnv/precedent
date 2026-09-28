@@ -4,7 +4,7 @@ PRECEDENT is an institutional memory application for technical decisions and eng
 
 ## Run the frontend demo
 
-Use Node.js 24 or another version supported by the frontend's Vite dependency. From the repository root:
+The frontend uses Vite 8, which requires Node.js `^20.19.0 || >=22.12.0`. Node.js 20.9 is too old; use Node.js 22.12 or newer (Node.js 24 is also supported). From the repository root:
 
 ```bash
 cd frontend

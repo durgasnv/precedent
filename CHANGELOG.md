@@ -327,3 +327,16 @@ Vite reads `frontend/package.json` and loads `frontend/src/main.jsx` from `front
 ### Process
 
 Compared the merged `main` tree with the Person 1 branch. The earlier revert had deleted files that were unchanged on the feature branch, so Git kept those deletions during the merge. Restored those exact files from the feature branch commit before the frontend Node.js documentation update.
+## 2026-09-29 — Clarify the frontend Node.js requirement
+
+### Change
+
+- Declared the Vite 8 Node.js requirement in the frontend package metadata and documented the exact supported versions in both setup guides.
+
+### How the feature works
+
+Vite 8 and its Rolldown bundler require Node.js `^20.19.0 || >=22.12.0`. Older runtimes such as Node.js 20.9 lack the `node:util.styleText` export used by the bundler and fail before the development server starts.
+
+### Process
+
+Checked the installed Vite and Rolldown package engine declarations against the reported `styleText` import error, then aligned package metadata and setup docs with those declared engine ranges.

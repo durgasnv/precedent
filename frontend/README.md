@@ -4,7 +4,7 @@ This React and Vite frontend demonstrates the planned decision workflow: propose
 
 ## Run
 
-Use Node.js 24 or a Node version supported by the Vite version in `package-lock.json`.
+Vite 8 requires Node.js `^20.19.0 || >=22.12.0`. Node.js 20.9 is too old; use Node.js 22.12 or newer (Node.js 24 is also supported).
 
 ```bash
 npm ci
