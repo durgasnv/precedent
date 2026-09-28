@@ -44,7 +44,7 @@ export default function Inbox({ proposal, setProposal, status, matches, analysis
               />
             ))}
           </div>
-          {decision && <DecisionCard decision={decision} />}
+          {decision && <DecisionCard decision={decision} demo={!liveMode} />}
           {liveMode && selectedMatch?.facts?.length > 0 && (
             <section className="card evidence"><h2>Recalled evidence</h2><ul>{selectedMatch.facts.map((fact) => <li key={fact.id}><p>{fact.text}</p><small>Fact {fact.id}{fact.document_id ? ` · ${fact.document_id}` : ''}</small></li>)}</ul></section>
           )}

@@ -15,10 +15,10 @@ const List = ({ items }) => (
   </ul>
 )
 
-export default function DecisionCard({ decision: d }) {
+export default function DecisionCard({ decision: d, demo = true }) {
   return (
     <article className="record decision-card">
-      <div className="record-stamp">Demo decision record, {d.date}</div>
+      <div className="record-stamp">{demo ? 'Demo decision record' : 'Historical decision record'}{d.date ? `, ${d.date}` : ''}</div>
       <h2>{d.title}</h2>
       <p className="meta">{d.team} team</p>
       <div className="decision-grid">

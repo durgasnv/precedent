@@ -34,7 +34,7 @@ export default function MemoryMatch({ matches, status, noMatchReason, error, ana
           />
         ))}
       </div>
-      {decision && <DecisionCard decision={decision} />}
+      {decision && <DecisionCard decision={decision} demo={!liveMode} />}
       {liveMode && selectedMatch?.facts?.length > 0 && <section className="card evidence"><h2>Recalled evidence</h2><ul>{selectedMatch.facts.map((fact) => <li key={fact.id}><p>{fact.text}</p><small>Fact {fact.id}{fact.document_id ? ` · ${fact.document_id}` : ''}</small></li>)}</ul></section>}
       {liveMode && analysis?.summary && <section className="ai-panel"><div className="ai-stamp">Current analysis</div><p>{analysis.summary}</p></section>}
     </div>

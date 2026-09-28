@@ -71,7 +71,7 @@ export default function App() {
         <div className="content">
           {page === 'inbox' && <Inbox {...shared} />}
           {page === 'memory' && <MemoryMatch {...shared} />}
-          {page === 'records' && <DecisionRecords />}
+          {page === 'records' && <DecisionRecords liveMode={liveMode} />}
           {page === 'assumptions' && <AssumptionCheckPage liveMode={liveMode} />}
           {page === 'timeline' && <Timeline />}
         </div>

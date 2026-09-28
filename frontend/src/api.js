@@ -2,13 +2,13 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
 
 export const liveMode = Boolean(baseUrl)
 
-async function request(path, body) {
+async function request(path, body, method = 'POST') {
   let response
   try {
     response = await fetch(`${baseUrl}${path}`, {
-      method: 'POST',
+      method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     })
   } catch {
     throw new Error('The PRECEDENT backend could not be reached. Check its URL and try again.')
@@ -29,3 +29,5 @@ async function request(path, body) {
 export const analyzeProposal = (proposal) => request('/api/analyze', { proposal })
 export const reassessDecision = (decision_id, changed_circumstances) =>
   request('/api/reassess', { decision_id, changed_circumstances })
+export const listDecisions = () => request('/api/decisions', undefined, 'GET')
+export const createDecision = (decision) => request('/api/decisions', decision)

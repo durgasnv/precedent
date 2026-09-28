@@ -2,6 +2,22 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module and a React frontend. The backend API is still a separate team task.
 
+## 2026-09-28 — Add the decision-recording frontend
+
+### Change
+
+- Added a decision form with the Person 1 record fields and a live decision-list view.
+- Added loading, empty, and error states for the decision list and save operation.
+- Kept the read-only seeded records in demo mode and labeled live records separately.
+
+### How the feature works
+
+With a backend URL configured, the page loads `GET /api/decisions`. A submitted form creates a UUID and date, sends `POST /api/decisions`, and adds the returned record to the page after success. Person 2's backend remains responsible for authoritative storage, validation, and calling Hindsight retain. Without a backend URL, the page shows the three shared fixtures and explains that recording is unavailable.
+
+### Process
+
+Mapped the requirements' decision fields to the existing Person 1 schema, kept multiline lists as arrays, and implemented the documented route contract. Verified lint and the production build.
+
 ## 2026-09-28 — Show live assumption reassessment in the frontend
 
 ### Change
