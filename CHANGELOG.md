@@ -125,3 +125,17 @@ The frontend adapts the shared decision records for display, then uses a local k
 ### Process
 
 Compared the frontend mock records and labels with the Person 1 fixture schema and service return fields. Reused the fixtures as the source of demo decision content, adjusted the UI examples, corrected the lint finding, and documented the current data flow and setup commands.
+
+## 2026-09-28 — Allow the shared fixture in Vite development
+
+### Change
+
+- Allowed Vite's development server to serve the single shared demo fixture imported by the frontend.
+
+### How the feature works
+
+The frontend imports `fixtures/demo-decisions.js` from the repository root. Vite's file serving allow list now includes that file and its normal workspace root, so the browser can load the demo in development. The server-side `.env` file is outside the added file allowance.
+
+### Process
+
+The production build passed, but the running development server returned 403 for the shared fixture. Checked Vite's `server.fs.allow` documentation, narrowed the added allowance to the fixture file, and verified the served module again.
