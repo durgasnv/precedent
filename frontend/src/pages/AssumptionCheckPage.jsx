@@ -3,7 +3,7 @@ import AssumptionCheck from '../components/AssumptionCheck'
 import { listDecisions, reassessDecision } from '../api'
 import { decisions, assumptionChecks } from '../mockData'
 
-export default function AssumptionCheckPage({ liveMode }) {
+export default function AssumptionCheckPage({ liveMode, collectionId }) {
   const [available, setAvailable] = useState(liveMode ? [] : decisions)
   const [id, setId] = useState(liveMode ? '' : decisions[0].id)
   const [info, setInfo] = useState(liveMode ? '' : assumptionChecks[decisions[0].id].newCircumstance)
@@ -16,7 +16,7 @@ export default function AssumptionCheckPage({ liveMode }) {
   useEffect(() => {
     if (!liveMode) return
     let active = true
-    listDecisions().then((response) => {
+    listDecisions(collectionId).then((response) => {
       const items = Array.isArray(response) ? response : response?.decisions
       if (!Array.isArray(items)) throw new Error('The backend returned an invalid decision list.')
       if (active) {
@@ -26,7 +26,7 @@ export default function AssumptionCheckPage({ liveMode }) {
     }).catch((cause) => { if (active) setError(cause.message || 'Decisions could not be loaded.') })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [liveMode])
+  }, [liveMode, collectionId])
 
   const run = async () => {
     if (!id || !info.trim() || busy) return
@@ -38,7 +38,7 @@ export default function AssumptionCheckPage({ liveMode }) {
     }
     setBusy(true)
     try {
-      const response = await reassessDecision(id, info.trim())
+      const response = await reassessDecision(id, info.trim(), collectionId)
       if (!['still_relevant', 'may_have_changed', 'insufficient_information'].includes(response?.status)) {
         throw new Error('The backend returned an invalid reassessment.')
       }

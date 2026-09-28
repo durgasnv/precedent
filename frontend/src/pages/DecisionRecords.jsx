@@ -17,7 +17,7 @@ function forDisplay(record) {
   }
 }
 
-export default function DecisionRecords({ liveMode }) {
+export default function DecisionRecords({ liveMode, collectionId }) {
   const [query, setQuery] = useState('')
   const [records, setRecords] = useState(liveMode ? [] : demoDecisions)
   const [busy, setBusy] = useState(liveMode)
@@ -26,7 +26,7 @@ export default function DecisionRecords({ liveMode }) {
   useEffect(() => {
     if (!liveMode) return
     let active = true
-    listDecisions().then((response) => {
+    listDecisions(collectionId).then((response) => {
       const items = Array.isArray(response) ? response : response?.decisions
       if (!Array.isArray(items)) throw new Error('The backend returned an invalid decision list.')
       if (active) setRecords(items.map(forDisplay))
@@ -34,10 +34,10 @@ export default function DecisionRecords({ liveMode }) {
       if (active) setError(cause.message || 'Decisions could not be loaded.')
     }).finally(() => { if (active) setBusy(false) })
     return () => { active = false }
-  }, [liveMode])
+  }, [liveMode, collectionId])
 
   const save = async (record) => {
-    const response = await createDecision(record)
+    const response = await createDecision(record, collectionId)
     const saved = response?.decision || response
     if (!saved?.id) throw new Error('The backend did not confirm the saved decision.')
     setRecords((previous) => [forDisplay(saved), ...previous])

@@ -2,6 +2,10 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Create and switch collections from the frontend
+
+Added a live collection selector and empty-collection creation form. All decision, detail, analysis, and reassessment requests send the selected collection ID. Each collection has its own React workspace instance, so switching clears old proposals, results, and drafts and prevents a late result from populating another collection. The offline demo remains a labeled example collection. Verified frontend lint and production build; browser and live Cloud checks remain separate from those static checks.
+
 ## 2026-09-28 — Isolate decision collections and Hindsight banks
 
 Added collection list/create routes and collection-scoped decision reads, writes, analysis, and reassessment. `X-Precedent-Collection` defaults to the existing demo collection and is checked before memory calls. Custom collections use separate Hindsight banks; the demo keeps the existing bank. Version 1 saved records migrate into the demo collection without ID changes. Tests cover empty collections, cross-collection detail/reassessment rejection, persistence, migration, and the bank used for every memory operation. Collections organize examples and do not provide user authentication.

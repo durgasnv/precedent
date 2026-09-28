@@ -8,6 +8,7 @@ import AssumptionCheckPage from './pages/AssumptionCheckPage'
 import Timeline from './pages/Timeline'
 import { decisions, findMatches } from './mockData'
 import { analyzeProposal, liveMode } from './api'
+import CollectionPicker from './components/CollectionPicker'
 
 const PAGES = {
   inbox: { label: 'Decision Inbox', subtitle: 'Propose a change and see what the team already learned.' },
@@ -18,6 +19,12 @@ const PAGES = {
 }
 
 export default function App() {
+  const [collection, setCollection] = useState({ id: 'demo', name: 'Engineering examples' })
+  return <Workspace key={collection.id} collection={collection} onCollectionChange={setCollection} />
+}
+
+function Workspace({ collection, onCollectionChange }) {
+  const collectionId = collection.id
   const [page, setPage] = useState('inbox')
   const [proposal, setProposal] = useState('')
   const [status, setStatus] = useState('idle') // idle | loading | done | error
@@ -34,7 +41,7 @@ export default function App() {
     setMatches([])
     try {
       if (liveMode) {
-        const result = await analyzeProposal(proposal.trim())
+        const result = await analyzeProposal(proposal.trim(), collectionId)
         if (!Array.isArray(result?.decision_matches)) throw new Error('The backend returned an invalid analysis.')
         setMatches(result.decision_matches.map((group) => ({
           decisionId: group.decision_id,
@@ -56,7 +63,7 @@ export default function App() {
     }
   }
 
-  const shared = { proposal, setProposal, status, matches, analysis, noMatchReason, error, analyze, onNavigate: setPage, liveMode }
+  const shared = { proposal, setProposal, status, matches, analysis, noMatchReason, error, analyze, onNavigate: setPage, liveMode, collectionId }
 
   return (
     <div className="app">
@@ -69,10 +76,11 @@ export default function App() {
           busy={status === 'loading'}
         />
         <div className="content">
+          {liveMode && <CollectionPicker selected={collection} onSelect={onCollectionChange} />}
           {page === 'inbox' && <Inbox {...shared} />}
           {page === 'memory' && <MemoryMatch {...shared} />}
-          {page === 'records' && <DecisionRecords liveMode={liveMode} />}
-          {page === 'assumptions' && <AssumptionCheckPage liveMode={liveMode} />}
+          {page === 'records' && <DecisionRecords liveMode={liveMode} collectionId={collectionId} />}
+          {page === 'assumptions' && <AssumptionCheckPage liveMode={liveMode} collectionId={collectionId} />}
           {page === 'timeline' && <Timeline />}
         </div>
       </main>
