@@ -94,3 +94,18 @@ The smoke command seeds stable decisions, verifies related recall, checks struct
 ### Process
 
 Used the local ignored `.env` to run the live integration twice without printing or committing the API key. Three decision recalls passed, the WebSocket proposal produced supported fact matches, the changed proxy scenario returned `may_have_changed`, and an unrelated proposal returned zero relevant decisions. Match counts varied between runs, so the repeatable check verifies expected decision IDs and outcomes.
+
+## 2026-09-28 — Merge the frontend into the Person 1 branch
+
+### Change
+
+- Merged the React and Vite frontend from `feat/person-3-frontend` into `feat/person-1-memory-ai`.
+- Kept the frontend branch and its history intact.
+
+### How the feature works
+
+The frontend currently presents a proposal inbox, memory matches, decision records, assumption checks, and a timeline using local demo data. The Person 1 module provides server-side Hindsight retain, recall, analysis, and reassessment methods. An HTTP backend is still needed to connect the two at runtime.
+
+### Process
+
+Merged the frontend branch into a clean Person 1 worktree, reviewed the staged files, and checked for conflicts. The merge had none.
