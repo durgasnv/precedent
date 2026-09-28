@@ -2,6 +2,10 @@
 
 This document records each project change, the affected workflow, and the process used. The repository contains a Hindsight memory module, Express API, and React frontend.
 
+## 2026-09-28 — Draft technical article titles
+
+Added `article-title-ideas.md` with 20 short Hindsight article titles grounded in the repository's decision records, memory boundaries, and assumption reassessment flow. Read the current code and chose the failed WebSocket migration as the article's central case because it connects a stored outcome to a later change in network constraints.
+
 ## 2026-09-28 — Record a live decision timeline
 
 Stored `recorded` events when a decision is saved and `reassessed` events when an assumption check finishes, with timestamps and collection IDs. Version 2 storage migrates existing records into history. `GET /api/timeline` returns events for the selected collection; the frontend uses it in live mode and keeps its prepared timeline only for the offline demo. The reassessment event stores the generated result separately from the historical decision and is not retained as a new fact. Verified event persistence after restart, collection isolation, API responses, frontend lint, and production build.
