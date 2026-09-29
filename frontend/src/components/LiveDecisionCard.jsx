@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchDecision } from '../api'
 import DecisionCard from './DecisionCard'
+import SourceNote from './SourceNote'
 
 export default function LiveDecisionCard({ id, collectionId }) {
   const [record, setRecord] = useState(null)
@@ -18,5 +19,8 @@ export default function LiveDecisionCard({ id, collectionId }) {
 
   if (error) return <section className="card error-state" role="alert"><h2>Decision detail unavailable</h2><p>{error}</p></section>
   if (!record || record.id !== id) return <section className="card" role="status">Loading historical decision…</section>
-  return <DecisionCard decision={record} demo={false} />
+  return <>
+    <DecisionCard decision={record} demo={false} />
+    {record.source_id && <SourceNote id={id} collectionId={collectionId} />}
+  </>
 }

@@ -66,6 +66,18 @@ const REASSESSMENT_SCHEMA = {
   required: ['status', 'reason', 'challenged_assumptions', 'evidence_gaps'],
 };
 
+const IMPORT_FIELDS = ['title', 'problem', 'approach', 'outcome', 'failure_reason', 'decision'];
+const IMPORT_SCHEMA = {
+  type: 'object',
+  properties: {
+    draft: { type: 'object', properties: Object.fromEntries(IMPORT_FIELDS.map(field =>
+      [field, { type: 'string' }])), required: IMPORT_FIELDS },
+    passages: { type: 'object', properties: Object.fromEntries(IMPORT_FIELDS.map(field =>
+      [field, { type: 'string' }])), required: IMPORT_FIELDS },
+  },
+  required: ['draft', 'passages'],
+};
+
 const REQUIRED_DECISION_FIELDS = ['id', 'title', 'problem', 'approach', 'outcome', 'decision'];
 const OPTIONAL_LIST_FIELDS = ['alternatives', 'assumptions', 'reconsider_when', 'evidence', 'technologies', 'constraints', 'measurements'];
 const OPTIONAL_TEXT_FIELDS = ['project', 'team'];
@@ -285,6 +297,40 @@ export function createMemoryAi({ client, bankId }) {
         throw new MemoryAiError('HINDSIGHT_INVALID_RESPONSE', 'reassess', 'Hindsight reassessment has an invalid structure.');
       }
       return { decision_id: decision.id, changed_circumstances: changed, ...output, text: response.text };
+    },
+
+    async draftFromDocument(sourceText) {
+      const source = nonEmptyString(sourceText, 'sourceText');
+      if (source.length > 20000) throw new TypeError('Source text must be 20,000 characters or fewer.');
+      const prompt = [
+        'Extract a draft technical decision only from the source text below.',
+        'For each field, provide its value and an exact contiguous source passage that supports it.',
+        'Use empty strings when the source does not state a field. Do not use bank memories to fill gaps.',
+        'Do not infer a final outcome or decision that the source does not state.',
+        'SOURCE TEXT:',
+        source,
+      ].join('\n');
+      const response = await callHindsight('import', () => client.reflect(bank, prompt, {
+        budget: 'mid', responseSchema: IMPORT_SCHEMA,
+      }));
+      const output = structuredResponse(response, ['draft', 'passages'], 'import');
+      if (!output.draft || !output.passages || typeof output.draft !== 'object' ||
+          typeof output.passages !== 'object') {
+        throw new MemoryAiError('HINDSIGHT_INVALID_RESPONSE', 'import', 'Hindsight import has an invalid structure.');
+      }
+      const draft = {};
+      const passages = {};
+      for (const field of IMPORT_FIELDS) {
+        const value = output.draft[field];
+        const quote = output.passages[field];
+        if (typeof value !== 'string' || typeof quote !== 'string') {
+          throw new MemoryAiError('HINDSIGHT_INVALID_RESPONSE', 'import', 'Hindsight import has an invalid field.');
+        }
+        const exact = quote.trim() && source.includes(quote);
+        draft[field] = exact ? value.trim() : '';
+        passages[field] = exact ? { text: quote, start: source.indexOf(quote) } : null;
+      }
+      return { draft, passages, missing_fields: IMPORT_FIELDS.filter(field => !draft[field]) };
     },
   };
 }

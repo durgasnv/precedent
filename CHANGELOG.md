@@ -386,3 +386,18 @@ The operator creates a user from the command line. SQLite stores a hash of the p
 ### Process
 
 Added a user table to the SQLite model, checked all API routes through authentication and collection ownership middleware, connected the browser sign-in flow, and checked missing-token and cross-user access cases.
+
+## 2026-09-29 — Import reviewed decision notes
+
+### Change
+
+- Added Hindsight-backed draft extraction for pasted text and Markdown or text files, with exact source passages and a human review screen.
+- Stored approved decisions and original source text together with the Hindsight retention job, and added owner-scoped source retrieval.
+
+### How the feature works
+
+Preview sends source text to Hindsight Reflect but saves no memory. A field is suggested only when its cited passage exactly occurs in the source. The user edits the draft and saves it explicitly; the backend verifies the source hash and passage offsets, then records the decision and source in SQLite before retention. Imported records expose their original note to the authorized collection owner. See [reviewed import](docs/import-review.md).
+
+### Process
+
+Extended the Hindsight service with a structured extraction call, added preview and save endpoints, built the review form and source view, and checked fabricated passage rejection, source integrity, collection ownership, and frontend compilation.

@@ -23,6 +23,8 @@ In live mode, Assumption Check loads the decision list, then sends `POST /api/re
 
 In live mode, Decision Records loads `GET /api/decisions` and offers a form that sends `POST /api/decisions` with the Person 1 record fields. The backend assigns a UUID and saves the record with a Hindsight retention job in one SQLite transaction. A ready record appears in the list; a record still waiting for Hindsight appears in a separate indexing section with refresh and retry controls. In demo mode, records remain read-only examples.
 
+The live Decision Records page also accepts pasted text, Markdown, and plain-text files. `POST /api/imports/preview` asks Hindsight to extract a draft with source passages. The user edits the draft before `POST /api/imports` saves the approved record and original note. Source notes can be reopened from an imported decision.
+
 ## Different examples
 
 The live collection picker lists saved collections and creates an empty one from a name. The Engineering examples collection contains the original fixtures. Every record, analysis, and reassessment request sends `X-Precedent-Collection`; the backend uses that collection's records and Hindsight bank. Switching collections remounts the workspace, clearing the proposal, results, selected record, and unsaved form state. A pending request belongs to the old workspace and cannot put its result into the new one. Collections persist on the server; a page reload starts in Engineering examples.

@@ -149,6 +149,33 @@ test('reassessment uses the supplied historical decision without changing it', a
   assert.deepEqual(decision, original);
 });
 
+test('document extraction keeps only values with exact source passages', async () => {
+  const source = 'Title: WebSocket migration\nProblem: Reduce polling\nApproach: Use WebSockets\nOutcome: Connections failed behind proxies\nDecision: Use SSE';
+  const memory = createMemoryAi({ bankId: 'test-bank', client: fakeClient({
+    reflect: async (_bank, prompt, options) => {
+      assert.match(prompt, /Connections failed behind proxies/);
+      assert.equal(options.responseSchema.required.includes('passages'), true);
+      return { structured_output: {
+        draft: {
+          title: 'WebSocket migration', problem: 'Reduce polling',
+          approach: 'Use WebSockets', outcome: 'Connections failed behind proxies',
+          failure_reason: 'A fabricated reason', decision: 'Use SSE',
+        },
+        passages: {
+          title: 'WebSocket migration', problem: 'Reduce polling', approach: 'Use WebSockets',
+          outcome: 'Connections failed behind proxies', failure_reason: 'Not in source',
+          decision: 'Use SSE',
+        },
+      } };
+    },
+  }) });
+  const result = await memory.draftFromDocument(source);
+  assert.equal(result.draft.title, 'WebSocket migration');
+  assert.equal(result.draft.failure_reason, '');
+  assert.equal(result.passages.outcome.text, 'Connections failed behind proxies');
+  assert.ok(result.missing_fields.includes('failure_reason'));
+});
+
 test('rejects incomplete decisions and missing structured output', async () => {
   assert.throws(() => validateDecision({ ...decision, problem: '' }), /decision.problem/);
   assert.match(formatDecision(validateDecision(decision)), /Final decision: Use SSE/);

@@ -32,9 +32,10 @@ class OrchestratorService {
    * Record a new technical decision.
    * Flow: validate/assign ID -> transactional outbox -> retain -> mark ready
    */
-  async recordDecision(data, collectionId) {
+  async recordDecision(data, collectionId, source = null) {
     const createdDecision = decisionModel.prepare(data, collectionId);
-    decisionModel.queue(createdDecision);
+    if (source) createdDecision.source_id = source.id;
+    decisionModel.queue(createdDecision, source);
     const retentionResult = await retentionService.processOne(createdDecision.id);
 
     return {

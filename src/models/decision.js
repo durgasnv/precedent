@@ -52,7 +52,8 @@ export class DecisionModel {
       'CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY,collection_id TEXT NOT NULL REFERENCES collections(id),decision_id TEXT NOT NULL REFERENCES decisions(id),kind TEXT NOT NULL,at TEXT NOT NULL,payload TEXT NOT NULL);' +
       'CREATE INDEX IF NOT EXISTS events_collection ON events(collection_id,at);' +
       "CREATE TABLE IF NOT EXISTS outbox (decision_id TEXT PRIMARY KEY REFERENCES decisions(id),collection_id TEXT NOT NULL,state TEXT NOT NULL CHECK(state IN ('pending','processing','done','failed')),attempts INTEGER NOT NULL DEFAULT 0,due_at INTEGER NOT NULL DEFAULT 0,lease_until INTEGER NOT NULL DEFAULT 0,error TEXT);" +
-      'CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY,name TEXT NOT NULL UNIQUE,token_hash TEXT NOT NULL UNIQUE,created_at TEXT NOT NULL);'
+      'CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY,name TEXT NOT NULL UNIQUE,token_hash TEXT NOT NULL UNIQUE,created_at TEXT NOT NULL);' +
+      'CREATE TABLE IF NOT EXISTS sources (id TEXT PRIMARY KEY,decision_id TEXT NOT NULL UNIQUE REFERENCES decisions(id),collection_id TEXT NOT NULL REFERENCES collections(id),filename TEXT,source_url TEXT,sha256 TEXT NOT NULL,content TEXT NOT NULL,passages TEXT NOT NULL,reviewer_id TEXT NOT NULL REFERENCES users(id),created_at TEXT NOT NULL);'
     );
     if (this.db.prepare('SELECT COUNT(*) AS total FROM collections').get().total === 0) {
       const snapshot = initialState(filePath ? legacyPath : null, seeds);
@@ -144,15 +145,27 @@ export class DecisionModel {
     return { ...validateDecision({ ...data, id: randomUUID(), date: data.date || createdAt.slice(0, 10) }),
       createdAt, collection_id: collectionId };
   }
-  queue(record) {
+  queue(record, source = null) {
     if (!this.getCollection(record.collection_id)) throw new TypeError('Unknown decision collection.');
     this.db.transaction(() => {
       this.db.prepare('INSERT INTO decisions (id,collection_id,payload,status,created_at) VALUES (?,?,?,?,?)')
         .run(record.id, record.collection_id, JSON.stringify(record), 'pending', record.createdAt);
       this.db.prepare("INSERT INTO outbox (decision_id,collection_id,state) VALUES (?,?,'pending')")
         .run(record.id, record.collection_id);
+      if (source) {
+        this.db.prepare('INSERT INTO sources (id,decision_id,collection_id,filename,source_url,sha256,content,passages,reviewer_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
+          .run(source.id, record.id, record.collection_id, source.filename, source.source_url,
+            source.sha256, source.content, JSON.stringify(source.passages), source.reviewer_id, now());
+      }
     })();
     return structuredClone(record);
+  }
+  getSource(decisionId, collectionId) {
+    const row = this.db.prepare('SELECT id,filename,source_url,sha256,content,passages,created_at FROM sources WHERE decision_id=? AND collection_id=?')
+      .get(decisionId, collectionId);
+    return row ? { id: row.id, filename: row.filename, source_url: row.source_url,
+      sha256: row.sha256, content: row.content, passages: JSON.parse(row.passages),
+      created_at: row.created_at } : null;
   }
   dueRetentionIds(limit = 20) {
     return this.db.prepare("SELECT decision_id FROM outbox WHERE (state='pending' AND due_at<=?) OR (state='processing' AND lease_until<=?) ORDER BY rowid LIMIT ?")

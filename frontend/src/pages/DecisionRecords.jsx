@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import DecisionCard from '../components/DecisionCard'
 import DecisionForm from '../components/DecisionForm'
+import ImportReview from '../components/ImportReview'
+import SourceNote from '../components/SourceNote'
 import EmptyState from '../components/EmptyState'
 import { createDecision, listDecisions, listPendingDecisions, retryDecision } from '../api'
 import { decisions as demoDecisions } from '../mockData'
@@ -37,14 +39,13 @@ export default function DecisionRecords({ liveMode, collectionId }) {
     return () => { active = false }
   }, [liveMode, collectionId])
 
-  const save = async (record) => {
-    const response = await createDecision(record, collectionId)
-    const saved = response
+  const acceptSaved = async (saved) => {
     if (!saved?.id) throw new Error('The backend did not confirm the saved decision.')
     if (saved.retention_status === 'ready') setRecords((previous) => [forDisplay(saved), ...previous])
     else setPending((previous) => [saved, ...previous])
     setError('')
   }
+  const save = async (record) => acceptSaved(await createDecision(record, collectionId))
 
   const refresh = async () => {
     const [ready, waiting] = await Promise.all([listDecisions(collectionId), listPendingDecisions(collectionId)])
@@ -66,6 +67,7 @@ export default function DecisionRecords({ liveMode, collectionId }) {
   return (
     <div className="stack">
       {liveMode ? <DecisionForm onSave={save} /> : <section className="card"><p>These are example records. Connect the backend to save a new decision to Hindsight.</p></section>}
+      {liveMode && <ImportReview collectionId={collectionId} onSaved={acceptSaved} />}
       {liveMode && pending.length > 0 && <section className="card">
         <h2>Waiting for Hindsight indexing</h2>
         <p>These decisions are saved locally and will appear in search after retention succeeds.</p>
@@ -79,7 +81,10 @@ export default function DecisionRecords({ liveMode, collectionId }) {
       {busy && <section className="card" role="status">Loading decisions…</section>}
       {error && <section className="card error-state" role="alert"><h2>Decisions could not be loaded</h2><p>{error}</p></section>}
       {!busy && !error && list.length === 0 && <EmptyState title={records.length ? 'No records match' : 'No decisions recorded yet'} body={records.length ? 'Try a different keyword or clear the search.' : 'Record the first technical decision above.'} actionLabel={records.length ? 'Clear search' : undefined} onAction={() => setQuery('')} />}
-      {list.map((record) => <DecisionCard key={record.id} decision={record} demo={!liveMode} />)}
+      {list.map((record) => <div key={record.id}>
+        <DecisionCard decision={record} demo={!liveMode} />
+        {liveMode && record.source_id && <SourceNote id={record.id} collectionId={collectionId} />}
+      </div>)}
     </div>
   )
 }

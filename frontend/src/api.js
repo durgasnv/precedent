@@ -52,5 +52,8 @@ export const retryDecision = (id, collectionId) => request('/api/decisions/' + e
 export const fetchDecision = (id, collectionId) => request(`/api/decisions/${encodeURIComponent(id)}`, undefined, 'GET', collectionId)
 export const createDecision = (decision, collectionId) => request('/api/decisions', decision, 'POST', collectionId)
 export const listCollections = () => request('/api/collections', undefined, 'GET')
+export const previewImport = (source, collectionId) => request('/api/imports/preview', source, 'POST', collectionId)
+export const saveImportedDecision = (reviewed, collectionId) => request('/api/imports', reviewed, 'POST', collectionId)
+export const fetchDecisionSource = (id, collectionId) => request('/api/decisions/' + encodeURIComponent(id) + '/source', undefined, 'GET', collectionId)
 export const createCollection = (name) => request('/api/collections', { name })
 export const listTimeline = (collectionId) => request('/api/timeline', undefined, 'GET', collectionId)

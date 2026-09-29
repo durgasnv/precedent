@@ -1,6 +1,6 @@
 # Next implementation priorities
 
-Reviewed against `main` on 2026-09-29. PRECEDENT already records decisions, retains them in Hindsight, recalls supporting facts, reassesses changed assumptions, and keeps a collection timeline. The [flexible memory roadmap](flexible-memory-roadmap.md) marks document import and outcome feedback as planned; this review ranks them alongside gaps found in the current API and frontend.
+Reviewed against `main` on 2026-09-29. PRECEDENT already records decisions, retains them in Hindsight, recalls supporting facts, reassesses changed assumptions, and keeps a collection timeline. The [flexible memory roadmap](flexible-memory-roadmap.md) originally marked document import and outcome feedback as planned; this review ranks them alongside gaps found in the current API and frontend.
 
 | Order | Implementation | Why it matters |
 | --- | --- | --- |
@@ -9,6 +9,8 @@ Reviewed against `main` on 2026-09-29. PRECEDENT already records decisions, reta
 | 3 | Import reviewed source documents with provenance | Manual entry makes it hard to adopt PRECEDENT for an existing decision history or check a claim against its original passage. |
 | 4 | Record measured follow-up outcomes | Reassessment now records a generated assessment; the actual result of a later experiment has no dedicated linked workflow. |
 | 5 | Show real connection status and measure memory quality | “Live mode” currently means an API URL exists, while the smoke script covers only a small fixed set of cases. |
+
+Priorities 1–3 were implemented on 2026-09-29. See [access control](access-control.md), [storage and retention](storage-and-retention.md), and [reviewed import](import-review.md). The baseline descriptions below explain the gaps that prompted those changes; priorities 4 and 5 remain planned.
 
 ## 1. Authenticate users and authorize collections
 

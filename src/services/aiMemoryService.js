@@ -44,6 +44,7 @@ export class AIMemoryServiceBoundary {
           analyzeProposal: ({ proposal }) => memory.analyzeProposal(proposal),
           reassessAssumptions: ({ decisionRecord, changedCircumstances }) =>
             memory.reassessDecision(decisionRecord, changedCircumstances),
+          draftFromDocument: (text) => memory.draftFromDocument(text),
         };
       })();
       this.providers.set(collectionId, ready);
@@ -70,6 +71,12 @@ export class AIMemoryServiceBoundary {
     const provider = await this.readyProvider(payload.collectionId);
     if (!provider.reassessAssumptions) throw new ServiceNotConnectedError('Reassessment is unavailable.');
     return provider.reassessAssumptions(payload);
+  }
+
+  async draftFromDocument(text, collectionId) {
+    const provider = await this.readyProvider(collectionId);
+    if (!provider.draftFromDocument) throw new ServiceNotConnectedError('Document extraction is unavailable.');
+    return provider.draftFromDocument(text);
   }
 }
 

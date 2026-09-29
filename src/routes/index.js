@@ -11,6 +11,7 @@ import analyzeRoutes from './analyze.js';
 import reassessRoutes from './reassess.js';
 import collectionRoutes from './collections.js';
 import timelineRoutes from './timeline.js';
+import importRoutes from './imports.js';
 import decisionModel from '../models/decision.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -29,5 +30,6 @@ router.use(decisionsRoutes);
 router.use(timelineRoutes);
 router.use(analyzeRoutes);
 router.use(reassessRoutes);
+router.use(importRoutes);
 
 export default router;

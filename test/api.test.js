@@ -5,6 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
+import { createHash } from 'node:crypto';
 
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -298,4 +299,44 @@ test('collection API starts empty and rejects cross-collection record access', a
   assert.equal(inside.status, 200);
   const timeline = await request('GET', '/api/timeline', null, headers);
   assert.deepEqual(timeline.body.data.map(event => event.kind), ['recorded']);
+});
+
+test('reviewed import preserves exact source passages and collection ownership', async () => {
+  const text = 'Title: WebSocket gateway\nProblem: Reduce polling\nApproach: Use WebSockets\nOutcome: Proxy connections failed\nDecision: Keep SSE';
+  const sha256 = createHash('sha256').update(text).digest('hex');
+  const fields = {
+    title: 'WebSocket gateway', problem: 'Reduce polling', approach: 'Use WebSockets',
+    outcome: 'Proxy connections failed', failure_reason: '', decision: 'Keep SSE',
+  };
+  const passages = Object.fromEntries(Object.keys(fields).map(key => {
+    const value = fields[key];
+    return [key, value ? { text: value, start: text.indexOf(value) } : null];
+  }));
+  aiMemoryService.registerProvider({
+    retainDecision: async () => ({ retained: true }),
+    draftFromDocument: async () => ({ draft: fields, passages, missing_fields: ['failure_reason'] }),
+  });
+  const preview = await request('POST', '/api/imports/preview', { text, filename: 'decision.md' });
+  assert.equal(preview.status, 200);
+  assert.equal(preview.body.data.source.sha256, sha256);
+  const bad = await request('POST', '/api/imports', {
+    text, filename: 'decision.md', sourceHash: sha256, draft: fields,
+    passages: { ...passages, outcome: { text: 'Fabricated', start: 0 } },
+  });
+  assert.equal(bad.status, 400);
+  const saved = await request('POST', '/api/imports', {
+    text, filename: 'decision.md', sourceHash: sha256, draft: fields, passages,
+  });
+  assert.equal(saved.status, 201);
+  assert.equal(saved.body.data.retention_status, 'ready');
+  const id = saved.body.data.id;
+  const source = await request('GET', '/api/decisions/' + id + '/source');
+  assert.equal(source.status, 200);
+  assert.equal(source.body.data.content, text);
+  assert.deepEqual(source.body.data.passages.outcome, passages.outcome);
+  const other = decisionModel.createUser('Import access test user');
+  const denied = await request('GET', '/api/decisions/' + id + '/source', null,
+    { Authorization: 'Bearer ' + other.token, 'X-Precedent-Collection': 'demo' });
+  assert.equal(denied.status, 404);
+  aiMemoryService.registerProvider(null);
 });
