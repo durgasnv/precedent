@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import Database from 'better-sqlite3';
@@ -7,6 +7,7 @@ import { validateDecision } from '../memory-ai.js';
 
 const now = () => new Date().toISOString();
 const decode = (row) => row ? JSON.parse(row.payload) : null;
+const tokenHash = (token) => createHash('sha256').update(token).digest('hex');
 
 function initialState(path, seeds) {
   if (!path || !existsSync(path)) {
@@ -76,12 +77,14 @@ export class DecisionModel {
     if (addEvent) this.insertEvent({ id: randomUUID(), collection_id: record.collection_id,
       decision_id: record.id, kind: 'recorded', at: record.createdAt || now(), title: record.title });
   }
-  listCollections() {
-    return this.db.prepare('SELECT id,name,created_at AS createdAt,owner_id AS ownerId FROM collections ORDER BY rowid')
-      .all().map(({ id, name, createdAt, ownerId }) => ({ id, name,
-        ...(createdAt ? { createdAt } : {}), ...(ownerId ? { ownerId } : {}) }));
+  listCollections(ownerId = null) {
+    const rows = ownerId
+      ? this.db.prepare('SELECT id,name,created_at AS createdAt,owner_id AS ownerId FROM collections WHERE owner_id=? ORDER BY rowid').all(ownerId)
+      : this.db.prepare('SELECT id,name,created_at AS createdAt,owner_id AS ownerId FROM collections ORDER BY rowid').all();
+    return rows.map(({ id, name, createdAt, ownerId: owner }) => ({ id, name,
+        ...(createdAt ? { createdAt } : {}), ...(owner ? { ownerId: owner } : {}) }));
   }
-  getCollection(id) { return this.listCollections().find(item => item.id === id) || null; }
+  getCollection(id, ownerId = null) { return this.listCollections(ownerId).find(item => item.id === id) || null; }
   createCollection(name, ownerId = null) {
     if (typeof name !== 'string' || !name.trim() || name.trim().length > 80)
       throw new TypeError('Collection name must contain 1–80 characters.');
@@ -89,6 +92,35 @@ export class DecisionModel {
     this.db.prepare('INSERT INTO collections (id,name,created_at,owner_id) VALUES (?,?,?,?)')
       .run(item.id, item.name, item.createdAt, ownerId);
     return item;
+  }
+  createUser(name) {
+    if (typeof name !== 'string' || !name.trim() || name.trim().length > 80)
+      throw new TypeError('User name must contain 1–80 characters.');
+    const token = randomBytes(32).toString('base64url');
+    const user = { id: randomUUID(), name: name.trim(), createdAt: now() };
+    this.db.transaction(() => {
+      const firstUser = this.db.prepare('SELECT COUNT(*) AS total FROM users').get().total === 0;
+      this.db.prepare('INSERT INTO users (id,name,token_hash,created_at) VALUES (?,?,?,?)')
+        .run(user.id, user.name, tokenHash(token), user.createdAt);
+      if (firstUser) {
+        this.db.prepare('UPDATE collections SET owner_id=? WHERE owner_id IS NULL').run(user.id);
+      } else {
+        this.createCollection(user.name + ' decisions', user.id);
+      }
+    })();
+    return { ...user, token };
+  }
+  getUserByToken(token) {
+    if (typeof token !== 'string' || token.length !== 43 || !/^[A-Za-z0-9_-]+$/.test(token)) return null;
+    const row = this.db.prepare('SELECT id,name,created_at AS createdAt FROM users WHERE token_hash=?')
+      .get(tokenHash(token));
+    return row || null;
+  }
+  rotateUserToken(name) {
+    const token = randomBytes(32).toString('base64url');
+    const result = this.db.prepare('UPDATE users SET token_hash=? WHERE name=?').run(tokenHash(token), name);
+    if (!result.changes) throw new TypeError('User not found.');
+    return token;
   }
   getAll(collectionId = 'demo') {
     return this.db.prepare("SELECT payload FROM decisions WHERE collection_id=? AND status='ready' ORDER BY rowid")

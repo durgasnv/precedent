@@ -78,3 +78,19 @@ test('recording and reassessment history survives restart in its collection', ()
   assert.equal(events[1].assessment.status, 'may_have_changed');
   assert.equal(events[1].changed_circumstances, 'Proxy policy changed');
 });
+
+test('operator-issued tokens are hashed and legacy collections belong to the first user', () => {
+  const store = new DecisionModel({ filePath: null, seeds: [] });
+  const owner = store.createUser('First user');
+  assert.equal(store.getUserByToken(owner.token).id, owner.id);
+  assert.equal(store.listCollections(owner.id)[0].id, 'demo');
+  const second = store.createUser('Second user');
+  assert.equal(store.getCollection('demo', second.id), null);
+  assert.equal(store.listCollections(second.id).length, 1);
+  const rotated = store.rotateUserToken('First user');
+  assert.equal(store.getUserByToken(owner.token), null);
+  assert.equal(store.getUserByToken(rotated).id, owner.id);
+  const stored = store.db.prepare('SELECT token_hash FROM users WHERE id=?').get(owner.id);
+  assert.notEqual(stored.token_hash, rotated);
+  store.close();
+});

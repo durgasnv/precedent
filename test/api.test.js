@@ -15,6 +15,8 @@ const storageDirectory = mkdtempSync(join(tmpdir(), 'precedent-api-'));
 process.env.DECISION_DB_PATH = join(storageDirectory, 'decisions.sqlite');
 process.env.DECISION_STORE_PATH = join(storageDirectory, 'legacy.json');
 const { default: app } = await import('../src/app.js');
+const { default: decisionModel } = await import('../src/models/decision.js');
+const owner = decisionModel.createUser('API test owner');
 
 let server;
 let baseUrl;
@@ -40,7 +42,7 @@ test.after(async () => {
 function request(method, path, body = null, headers = {}) {
   return new Promise((resolve, reject) => {
     const url = new URL(path, baseUrl);
-    const reqHeaders = { ...headers };
+    const reqHeaders = { Authorization: 'Bearer ' + owner.token, ...headers };
     let payload = null;
 
     if (body !== null) {
@@ -83,6 +85,34 @@ test('1. GET /api/health - Health check endpoint', async () => {
   assert.equal(res.body.status, 'ok');
   assert.equal(res.body.service, 'precedent-backend');
   assert.ok(res.body.timestamp);
+});
+
+test('all decision routes require a valid access token', async () => {
+  const denied = await request('GET', '/api/decisions', null, { Authorization: '' });
+  assert.equal(denied.status, 401);
+  assert.equal(denied.body.error.code, 'UNAUTHORIZED');
+  const health = await request('GET', '/api/health', null, { Authorization: '' });
+  assert.equal(health.status, 200);
+});
+
+test('users can access only their own collections and records', async () => {
+  const other = decisionModel.createUser('Second API user');
+  const headers = { Authorization: 'Bearer ' + other.token };
+  const collections = await request('GET', '/api/collections', null, headers);
+  assert.equal(collections.status, 200);
+  assert.equal(collections.body.data.length, 1);
+  assert.notEqual(collections.body.data[0].id, 'demo');
+  const cross = { ...headers, 'X-Precedent-Collection': 'demo' };
+  const list = await request('GET', '/api/decisions', null, cross);
+  assert.equal(list.status, 404);
+  const record = await request('GET', '/api/decisions/demo-websocket-notifications', null, cross);
+  assert.equal(record.status, 404);
+  const analysis = await request('POST', '/api/analyze', { proposal: 'Try WebSockets again' }, cross);
+  assert.equal(analysis.status, 404);
+  const own = await request('GET', '/api/decisions', null, {
+    ...headers, 'X-Precedent-Collection': collections.body.data[0].id,
+  });
+  assert.deepEqual(own.body.data, []);
 });
 
 test('2. GET /api/decisions - List seed decisions', async () => {

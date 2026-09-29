@@ -371,3 +371,18 @@ Recording saves the decision and retention job together, then attempts synchrono
 ### Process
 
 Reviewed the retain-before-file-write failure in the existing orchestrator, added a transactional SQLite model and outbox worker, updated the API and UI states, and verified restart recovery, legacy import, pending visibility, and frontend compilation.
+
+## 2026-09-29 — Authorize access to decision collections
+
+### Change
+
+- Added operator-issued personal access tokens, owner-scoped collection listing and creation, and authorization before decision and Hindsight routes.
+- Added a frontend sign-in screen and restricted browser origins to configured values.
+
+### How the feature works
+
+The operator creates a user from the command line. SQLite stores a hash of the printed token. The browser sends the token on protected requests, and the API checks collection ownership before selecting its records or Hindsight bank. The first account claims existing collections; later accounts start with an empty personal collection. Token rotation invalidates the prior token. See [access control](docs/access-control.md).
+
+### Process
+
+Added a user table to the SQLite model, checked all API routes through authentication and collection ownership middleware, connected the browser sign-in flow, and checked missing-token and cross-user access cases.

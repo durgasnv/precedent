@@ -8,7 +8,9 @@
     "dev": "node --watch src/index.js",
     "test": "node --test",
     "memory:seed": "node --env-file=.env scripts/seed-decisions.js",
-    "memory:smoke": "node --env-file=.env scripts/memory-smoke.js"
+    "memory:smoke": "node --env-file=.env scripts/memory-smoke.js",
+    "auth:create-user": "node --env-file=.env scripts/create-user.js",
+    "auth:rotate-token": "node --env-file=.env scripts/rotate-user-token.js"
   },
   "dependencies": {
     "@vectorize-io/hindsight-client": "^0.10.1",

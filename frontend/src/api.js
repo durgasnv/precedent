@@ -1,13 +1,25 @@
 const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '')
+const tokenKey = 'precedent_access_token'
+let accessToken = typeof window === 'undefined' ? '' : window.sessionStorage.getItem(tokenKey) || ''
 
 export const liveMode = Boolean(baseUrl)
+export const getAccessToken = () => accessToken
+export function setAccessToken(token) {
+  accessToken = token.trim()
+  window.sessionStorage.setItem(tokenKey, accessToken)
+}
+export function clearAccessToken() {
+  accessToken = ''
+  window.sessionStorage.removeItem(tokenKey)
+}
 
 async function request(path, body, method = 'POST', collectionId = 'demo') {
   let response
   try {
     response = await fetch(`${baseUrl}${path}`, {
       method,
-      headers: { 'Content-Type': 'application/json', 'X-Precedent-Collection': collectionId },
+      headers: { 'Content-Type': 'application/json', 'X-Precedent-Collection': collectionId,
+        ...(accessToken ? { Authorization: 'Bearer ' + accessToken } : {}) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     })
   } catch {
@@ -21,12 +33,17 @@ async function request(path, body, method = 'POST', collectionId = 'demo') {
     throw new Error('The backend returned a response PRECEDENT could not read.')
   }
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAccessToken()
+      window.dispatchEvent(new Event('precedent-unauthorized'))
+    }
     throw new Error(typeof data?.error?.message === 'string' ? data.error.message : 'The request failed. Please try again.')
   }
   return data?.data ?? data
 }
 
 export const analyzeProposal = (proposal, collectionId) => request('/api/analyze', { proposal }, 'POST', collectionId)
+export const getCurrentUser = () => request('/api/auth/me', undefined, 'GET')
 export const reassessDecision = (decision_id, changed_circumstances, collectionId) =>
   request('/api/reassess', { decisionId: decision_id, changedCircumstances: changed_circumstances }, 'POST', collectionId)
 export const listDecisions = (collectionId) => request('/api/decisions', undefined, 'GET', collectionId)

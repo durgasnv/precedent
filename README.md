@@ -20,7 +20,7 @@ From the repository root, run `npm ci` and `npm test`. Configure the ignored `.e
 
 ## Run the live workflow
 
-Configure `.env` at the repository root with the Hindsight instance URL, bank ID, and API key if required. Run `npm ci`, then `npm run memory:seed` to retain the three shared demo records in Hindsight. Start the API with `npm start`; it listens on port 5000 by default. In `frontend`, copy `.env.example` to `.env`, run `npm ci`, and start Vite with `npm run dev`. The frontend then uses the Express routes for decision recording, analysis, and reassessment. Select Engineering examples or create an empty collection for other technical examples. The backend saves records, collections, timeline events, and pending Hindsight retention jobs in SQLite at `DECISION_DB_PATH` (default `data/precedent.sqlite`). An existing `DECISION_STORE_PATH` JSON file is imported into a new database once and kept as a backup. See [storage and retention](docs/storage-and-retention.md).
+Configure `.env` at the repository root with the Hindsight instance URL, bank ID, and API key if required. Run `npm ci`, then `npm run auth:create-user -- "Your name"` and save the token printed once. Run `npm run memory:seed` to retain the three shared demo records in Hindsight. Start the API with `npm start`; it listens on port 5000 by default. In `frontend`, copy `.env.example` to `.env`, run `npm ci`, and start Vite with `npm run dev`. Enter your personal token in the browser. The frontend then uses the Express routes for decision recording, analysis, and reassessment. Select Engineering examples or create an empty collection for other technical examples. The backend saves records, collections, timeline events, and pending Hindsight retention jobs in SQLite at `DECISION_DB_PATH` (default `data/precedent.sqlite`). An existing `DECISION_STORE_PATH` JSON file is imported into a new database once and kept as a backup. See [storage and retention](docs/storage-and-retention.md) and [access control](docs/access-control.md).
 
 ## Project documents
 
@@ -32,6 +32,7 @@ Configure `.env` at the repository root with the Hindsight instance URL, bank ID
 - [Change log and workflow](CHANGELOG.md)
 - [Memory and AI module](docs/memory-ai.md)
 - [Storage and Hindsight retention](docs/storage-and-retention.md)
+- [Access control](docs/access-control.md)
 - [Flexible decision memory roadmap](docs/flexible-memory-roadmap.md)
 - [Next implementation priorities](docs/implementation-priorities.md)
 - [Technical article](article.md)

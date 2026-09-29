@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import Inbox from './pages/Inbox'
@@ -7,8 +7,9 @@ import DecisionRecords from './pages/DecisionRecords'
 import AssumptionCheckPage from './pages/AssumptionCheckPage'
 import Timeline from './pages/Timeline'
 import { decisions, findMatches } from './mockData'
-import { analyzeProposal, liveMode } from './api'
+import { analyzeProposal, clearAccessToken, getAccessToken, getCurrentUser, listCollections, liveMode, setAccessToken } from './api'
 import CollectionPicker from './components/CollectionPicker'
+import AccessGate from './components/AccessGate'
 
 const PAGES = {
   inbox: { label: 'Decision Inbox', subtitle: 'Propose a change and see what the team already learned.' },
@@ -20,10 +21,45 @@ const PAGES = {
 
 export default function App() {
   const [collection, setCollection] = useState({ id: 'demo', name: 'Engineering examples' })
-  return <Workspace key={collection.id} collection={collection} onCollectionChange={setCollection} />
+  const [access, setAccess] = useState(liveMode ? (getAccessToken() ? 'checking' : 'locked') : 'ready')
+  const [accessError, setAccessError] = useState('')
+
+  useEffect(() => {
+    if (!liveMode) return
+    const locked = () => setAccess('locked')
+    window.addEventListener('precedent-unauthorized', locked)
+    if (getAccessToken()) Promise.all([getCurrentUser(), listCollections()])
+      .then(([, items]) => {
+        if (!items.length) throw new Error('No decision collection is available for this user.')
+        setCollection(items[0])
+        setAccess('ready')
+      }).catch(() => { clearAccessToken(); setAccess('locked') })
+    return () => window.removeEventListener('precedent-unauthorized', locked)
+  }, [])
+
+  const signIn = async (token) => {
+    setAccessError('')
+    setAccess('checking')
+    setAccessToken(token)
+    try {
+      const [, items] = await Promise.all([getCurrentUser(), listCollections()])
+      if (!items.length) throw new Error('No decision collection is available for this user.')
+      setCollection(items[0])
+      setAccess('ready')
+    } catch (cause) {
+      clearAccessToken()
+      setAccessError(cause.message || 'Access could not be confirmed.')
+      setAccess('locked')
+    }
+  }
+  if (access === 'checking') return <main className="main"><div className="content">Checking PRECEDENT access…</div></main>
+  if (access === 'locked') return <AccessGate onSignIn={signIn} error={accessError} busy={false} />
+  const signOut = () => { clearAccessToken(); setAccess('locked') }
+  return <Workspace key={collection.id} collection={collection}
+    onCollectionChange={setCollection} onSignOut={signOut} />
 }
 
-function Workspace({ collection, onCollectionChange }) {
+function Workspace({ collection, onCollectionChange, onSignOut }) {
   const collectionId = collection.id
   const [page, setPage] = useState('inbox')
   const [proposal, setProposal] = useState('')
@@ -76,6 +112,7 @@ function Workspace({ collection, onCollectionChange }) {
           busy={status === 'loading'}
         />
         <div className="content">
+          {liveMode && <button className="btn" onClick={onSignOut}>Sign out</button>}
           {liveMode && <CollectionPicker selected={collection} onSelect={onCollectionChange} />}
           {page === 'inbox' && <Inbox {...shared} />}
           {page === 'memory' && <MemoryMatch {...shared} />}
