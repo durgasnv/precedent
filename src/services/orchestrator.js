@@ -7,6 +7,7 @@
 
 import decisionModel from '../models/decision.js';
 import { aiMemoryService } from './aiMemoryService.js';
+import { retentionService } from './retentionService.js';
 
 class OrchestratorService {
   /**
@@ -29,17 +30,30 @@ class OrchestratorService {
 
   /**
    * Record a new technical decision.
-   * Flow: validate/assign ID -> Person 1 retain -> persist record -> response
+   * Flow: validate/assign ID -> transactional outbox -> retain -> mark ready
    */
   async recordDecision(data, collectionId) {
     const createdDecision = decisionModel.prepare(data, collectionId);
-    const retentionResult = await aiMemoryService.retainDecision(createdDecision, collectionId);
-    decisionModel.insert(createdDecision);
+    decisionModel.queue(createdDecision);
+    const retentionResult = await retentionService.processOne(createdDecision.id);
 
     return {
       decision: createdDecision,
       retentionStatus: retentionResult
     };
+  }
+
+  async listPendingDecisions(collectionId) {
+    return decisionModel.getPending(collectionId);
+  }
+
+  async retryDecision(id, collectionId) {
+    if (!decisionModel.retryRetention(id, collectionId)) {
+      const error = new Error('No failed retention job was found for this decision.');
+      error.statusCode = 404;
+      throw error;
+    }
+    return retentionService.processOne(id);
   }
 
   /**

@@ -355,3 +355,19 @@ The review maps each proposal to current code behavior, an implementation path, 
 ### Process
 
 Reviewed the tracked project documents, API routes, canonical storage, Hindsight module and scripts, and frontend flows on `main`. Compared current behavior with the existing flexible-memory roadmap and checked relevant Hindsight documentation before ranking the work.
+
+## 2026-09-29 — Make decision retention recoverable
+
+### Change
+
+- Replaced the single-process JSON snapshot store with SQLite for canonical records, events, collections, and an outbox of Hindsight retention jobs.
+- Added pending and failed indexing states, automatic retries, a manual retry API, and corresponding Decision Records controls.
+- Added one-time import of an existing JSON snapshot into a new SQLite database.
+
+### How the feature works
+
+Recording saves the decision and retention job together, then attempts synchronous Hindsight Retain. Successful retention marks the record ready and adds its timeline event; only ready decisions appear in search. A retryable failure stays pending with backoff, and a nonretryable failure can be retried manually. Stable Hindsight document IDs let an expired lease be processed again after a crash. Details are in [storage and retention](docs/storage-and-retention.md).
+
+### Process
+
+Reviewed the retain-before-file-write failure in the existing orchestrator, added a transactional SQLite model and outbox worker, updated the API and UI states, and verified restart recovery, legacy import, pending visibility, and frontend compilation.

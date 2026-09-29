@@ -25,6 +25,19 @@ router.get('/decisions', async (req, res, next) => {
   }
 });
 
+router.get('/decisions/pending', async (req, res, next) => {
+  try {
+    res.json({ success: true, data: await orchestrator.listPendingDecisions(req.collectionId) });
+  } catch (error) { next(error); }
+});
+
+router.post('/decisions/:id/retry', async (req, res, next) => {
+  try {
+    const result = await orchestrator.retryDecision(req.params.id, req.collectionId);
+    res.status(result?.state === 'ready' ? 200 : 202).json({ success: true, data: result });
+  } catch (error) { next(error); }
+});
+
 // GET /api/decisions/:id - Get a single decision record by ID
 router.get('/decisions/:id', async (req, res, next) => {
   try {
@@ -53,9 +66,9 @@ router.get('/decisions/:id', async (req, res, next) => {
 router.post('/decisions', validateRecordDecision, async (req, res, next) => {
   try {
     const result = await orchestrator.recordDecision(req.body, req.collectionId);
-    res.status(201).json({
+    res.status(result.retentionStatus?.state === 'ready' ? 201 : 202).json({
       success: true,
-      data: result.decision,
+      data: { ...result.decision, retention_status: result.retentionStatus?.state || 'pending' },
       retentionStatus: result.retentionStatus
     });
   } catch (err) {

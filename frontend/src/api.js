@@ -30,6 +30,8 @@ export const analyzeProposal = (proposal, collectionId) => request('/api/analyze
 export const reassessDecision = (decision_id, changed_circumstances, collectionId) =>
   request('/api/reassess', { decisionId: decision_id, changedCircumstances: changed_circumstances }, 'POST', collectionId)
 export const listDecisions = (collectionId) => request('/api/decisions', undefined, 'GET', collectionId)
+export const listPendingDecisions = (collectionId) => request('/api/decisions/pending', undefined, 'GET', collectionId)
+export const retryDecision = (id, collectionId) => request('/api/decisions/' + encodeURIComponent(id) + '/retry', {}, 'POST', collectionId)
 export const fetchDecision = (id, collectionId) => request(`/api/decisions/${encodeURIComponent(id)}`, undefined, 'GET', collectionId)
 export const createDecision = (decision, collectionId) => request('/api/decisions', decision, 'POST', collectionId)
 export const listCollections = () => request('/api/collections', undefined, 'GET')

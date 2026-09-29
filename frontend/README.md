@@ -21,7 +21,7 @@ Copy `.env.example` to `.env` in this directory, or set `VITE_API_BASE_URL=http:
 
 In live mode, Assumption Check loads the decision list, then sends `POST /api/reassess` with `{ "decisionId": "...", "changedCircumstances": "..." }`. It renders the returned status, reason, challenged assumptions, and evidence gaps while leaving the historical record unchanged. The inbox and Memory Match load the authoritative selected record through `GET /api/decisions/:id`, keeping its historical detail separate from the recalled facts and current analysis. In demo mode, the circumstance field is read-only and the button shows one prepared example for the selected seed decision; it does not claim to reassess arbitrary input.
 
-In live mode, Decision Records loads `GET /api/decisions` and offers a form that sends `POST /api/decisions` with the Person 1 record fields. The backend assigns a UUID, calls `retainDecision`, persists the record, and returns it in `data`. The frontend displays it only after the backend confirms success. In demo mode, records remain read-only examples.
+In live mode, Decision Records loads `GET /api/decisions` and offers a form that sends `POST /api/decisions` with the Person 1 record fields. The backend assigns a UUID and saves the record with a Hindsight retention job in one SQLite transaction. A ready record appears in the list; a record still waiting for Hindsight appears in a separate indexing section with refresh and retry controls. In demo mode, records remain read-only examples.
 
 ## Different examples
 

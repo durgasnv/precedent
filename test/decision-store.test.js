@@ -6,15 +6,16 @@ import { join } from 'node:path';
 import { demoDecisions } from '../fixtures/demo-decisions.js';
 
 const directory = mkdtempSync(join(tmpdir(), 'precedent-store-'));
-process.env.DECISION_STORE_PATH = join(directory, 'default.json');
+process.env.DECISION_DB_PATH = join(directory, 'default.sqlite');
+process.env.DECISION_STORE_PATH = join(directory, 'legacy.json');
 const { DecisionModel } = await import('../src/models/decision.js');
 test.after(() => rmSync(directory, { recursive: true, force: true }));
 
 test('records survive restart and IDs do not restart or reuse a caller ID', () => {
   const filePath = join(directory, 'restart.json');
-  const first = new DecisionModel({ filePath, seeds: [] });
+  const first = new DecisionModel({ filePath, legacyPath: null, seeds: [] });
   const record = first.create(demoDecisions[0]);
-  const restarted = new DecisionModel({ filePath, seeds: [] });
+  const restarted = new DecisionModel({ filePath, legacyPath: null, seeds: [] });
   assert.deepEqual(restarted.getById(record.id), record);
   const second = restarted.create(demoDecisions[0]);
   assert.notEqual(record.id, second.id);
@@ -25,7 +26,7 @@ test('records survive restart and IDs do not restart or reuse a caller ID', () =
 });
 
 test('preparing a decision does not expose it before retention succeeds', () => {
-  const store = new DecisionModel({ seeds: [] });
+  const store = new DecisionModel({ filePath: null, seeds: [] });
   const draft = store.prepare(demoDecisions[0]);
   assert.equal(store.getById(draft.id), null);
   store.insert(draft);
@@ -41,7 +42,7 @@ test('invalid storage fails without overwriting the file', () => {
 
 test('collections start empty, isolate records, and survive restart', () => {
   const filePath = join(directory, 'collections.json');
-  const store = new DecisionModel({ filePath });
+  const store = new DecisionModel({ filePath, legacyPath: null });
   const collection = store.createCollection('Database migration');
   assert.deepEqual(store.getAll(collection.id), []);
   assert.equal(store.getById(demoDecisions[0].id, collection.id), null);
@@ -53,17 +54,18 @@ test('collections start empty, isolate records, and survive restart', () => {
 });
 
 test('version 1 records migrate into the demo collection without changing IDs', () => {
-  const filePath = join(directory, 'migration.json');
-  writeFileSync(filePath, JSON.stringify({ version: 1, decisions: [demoDecisions[0]] }));
-  const store = new DecisionModel({ filePath });
+  const filePath = join(directory, 'migration.sqlite');
+  const legacyPath = join(directory, 'migration.json');
+  writeFileSync(legacyPath, JSON.stringify({ version: 1, decisions: [demoDecisions[0]] }));
+  const store = new DecisionModel({ filePath, legacyPath });
   assert.equal(store.getAll()[0].id, demoDecisions[0].id);
   assert.equal(store.getAll()[0].collection_id, 'demo');
-  assert.equal(JSON.parse(readFileSync(filePath, 'utf8')).version, 3);
+  assert.equal(JSON.parse(readFileSync(legacyPath, 'utf8')).version, 1);
 });
 
 test('recording and reassessment history survives restart in its collection', () => {
   const filePath = join(directory, 'history.json');
-  const first = new DecisionModel({ filePath, seeds: [] });
+  const first = new DecisionModel({ filePath, legacyPath: null, seeds: [] });
   const collection = first.createCollection('Notifications');
   const record = first.create(demoDecisions[0], collection.id);
   first.addReassessment(record.id, collection.id, 'Proxy policy changed', {
@@ -71,7 +73,7 @@ test('recording and reassessment history survives restart in its collection', ()
     challenged_assumptions: ['Corporate proxy remains'], evidence_gaps: ['Connection test'],
   });
   assert.deepEqual(first.getTimeline(), []);
-  const events = new DecisionModel({ filePath, seeds: [] }).getTimeline(collection.id);
+  const events = new DecisionModel({ filePath, legacyPath: null, seeds: [] }).getTimeline(collection.id);
   assert.deepEqual(events.map(event => event.kind), ['recorded', 'reassessed']);
   assert.equal(events[1].assessment.status, 'may_have_changed');
   assert.equal(events[1].changed_circumstances, 'Proxy policy changed');

@@ -12,7 +12,8 @@ import { join } from 'node:path';
 import { aiMemoryService, ServiceNotConnectedError } from '../src/services/aiMemoryService.js';
 
 const storageDirectory = mkdtempSync(join(tmpdir(), 'precedent-api-'));
-process.env.DECISION_STORE_PATH = join(storageDirectory, 'decisions.json');
+process.env.DECISION_DB_PATH = join(storageDirectory, 'decisions.sqlite');
+process.env.DECISION_STORE_PATH = join(storageDirectory, 'legacy.json');
 const { default: app } = await import('../src/app.js');
 
 let server;
@@ -148,7 +149,7 @@ test('6. POST /api/decisions - Record decision with missing required fields', as
   assert.ok(res.body.error.details.length >= 3);
 });
 
-test('failed Hindsight retention does not leave a locally stored decision', async () => {
+test('failed Hindsight retention leaves a recoverable pending decision outside search', async () => {
   aiMemoryService.registerProvider({ retainDecision: async () => { throw new ServiceNotConnectedError(); } });
   const before = await request('GET', '/api/decisions');
   const response = await request('POST', '/api/decisions', {
@@ -156,8 +157,11 @@ test('failed Hindsight retention does not leave a locally stored decision', asyn
     outcome: 'Unknown', failure_reason: '', decision: 'Wait for evidence',
   });
   const after = await request('GET', '/api/decisions');
-  assert.equal(response.status, 503);
+  assert.equal(response.status, 202);
+  assert.equal(response.body.data.retention_status, 'pending');
   assert.equal(after.body.count, before.body.count);
+  const pending = await request('GET', '/api/decisions/pending');
+  assert.ok(pending.body.data.some(item => item.id === response.body.data.id));
   aiMemoryService.registerProvider(null);
 });
 
