@@ -340,3 +340,18 @@ Vite 8 and its Rolldown bundler require Node.js `^20.19.0 || >=22.12.0`. Older r
 ### Process
 
 Checked the installed Vite and Rolldown package engine declarations against the reported `styleText` import error, then aligned package metadata and setup docs with those declared engine ranges.
+
+## 2026-09-29 — Prioritize the next PRECEDENT implementations
+
+### Change
+
+- Added a ranked implementation review covering collection access, recoverable Hindsight retention, reviewed imports, follow-up outcomes, and connection and memory-quality checks.
+- Linked the review from the project README.
+
+### How the feature works
+
+The review maps each proposal to current code behavior, an implementation path, and an observable completion criterion. It distinguishes planned roadmap features from gaps found in the running API and frontend; no product behavior changes in this documentation commit.
+
+### Process
+
+Reviewed the tracked project documents, API routes, canonical storage, Hindsight module and scripts, and frontend flows on `main`. Compared current behavior with the existing flexible-memory roadmap and checked relevant Hindsight documentation before ranking the work.
