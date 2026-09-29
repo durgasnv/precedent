@@ -313,3 +313,17 @@ The merged application connects the frontend workflow to the Express API. The AP
 ### Process
 
 Merged the feature branch into `main`. The earlier revert had removed files that were modified on the feature branch, so those conflicts were resolved using the feature branch versions. Kept the unrelated pre-existing planning-document deletions out of the merge.
+
+## 2026-09-29 — Restore runtime files omitted from main
+
+### Change
+
+- Restored the frontend package manifest, lockfile, React entry point, supporting components and assets, and the two Hindsight seed and smoke scripts.
+
+### How the feature works
+
+Vite reads `frontend/package.json` and loads `frontend/src/main.jsx` from `frontend/index.html`; the restored entry point renders the existing PRECEDENT app. The root package scripts again resolve to `scripts/seed-decisions.js` and `scripts/memory-smoke.js`.
+
+### Process
+
+Compared the merged `main` tree with the Person 1 branch. The earlier revert had deleted files that were unchanged on the feature branch, so Git kept those deletions during the merge. Restored those exact files from the feature branch commit before the frontend Node.js documentation update.
